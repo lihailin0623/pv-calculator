@@ -544,10 +544,10 @@ function renderLoads() {
   refreshKwh();
 }
 
-/* 负载编辑后：更新日用电量，并在曲线已生成时静默重算 */
+/* 负载编辑后：更新日用电量；曲线已生成则静默重算（配置与曲线联动，不重新请求 NASA） */
 function onLoadEdit() {
   refreshKwh();
-  if (lastCalc) regenSimulation(false);
+  if (lastCalc) calculate({ silent: true, refetch: false });
 }
 
 function refreshKwh() {
@@ -555,11 +555,30 @@ function refreshKwh() {
   if (el) el.textContent = getDailyKwh().toFixed(2);
 }
 
-/* ---- 计算 ---- */
-function calculate() {
-  if (loads.length === 0) { alert('请先选择至少一个负载设备'); return; }
+/* 取光伏日内形状（NASA 逐时优先，失败/手动模式回退正弦） */
+async function getPvShape(refetch) {
+  if (pshSource === 'nasa' && nasaLat != null && nasaLon != null) {
+    const key = nasaLat.toFixed(2) + ',' + nasaLon.toFixed(2);
+    if (refetch || !hourlyShapeCache[key]) {
+      const empty = document.getElementById('simEmpty');
+      empty.style.display = '';
+      empty.innerHTML = '<div class="sim-loading"><i class="ti ti-loader-2 spin"></i> 正在获取 NASA POWER 逐时辐照数据，合成全年平均日内曲线…（首次约数秒）</div>';
+      document.getElementById('simBody').style.display = 'none';
+    }
+    const s = await fetchHourlyShape(nasaLat, nasaLon);
+    if (s) return { shape: s, src: `NASA POWER 逐时真实数据 · 全年平均（${nasaLocationName}）` };
+    return { shape: sinePVShape(), src: '理论晴空正弦模型（NASA 逐时暂不可用，已回退）' };
+  }
+  return { shape: sinePVShape(), src: '理论晴空正弦模型（手动城市模式）' };
+}
+
+/* ---- 计算（配置 + 曲线，统一由逐时缺口驱动）---- */
+async function calculate(opts) {
+  opts = opts || {};
+  const silent = !!opts.silent;
+  if (loads.length === 0) { if (!silent) alert('请先选择至少一个负载设备'); return; }
   const psh = getActivePsh();
-  if (!psh) { alert(pshSource==='nasa' ? '请先查询 NASA 日照数据，或切换为手动选择城市' : '请选择城市'); return; }
+  if (!psh) { if (!silent) alert(pshSource === 'nasa' ? '请先查询 NASA 日照数据，或切换为手动选择城市' : '请选择城市'); return; }
 
   const autonomy  = +document.getElementById('autonomy').value;
   const dod       = +document.getElementById('batType').value;
@@ -574,15 +593,25 @@ function calculate() {
   const peakKw    = loads.reduce((s, l) => s + l.power * (l.qty||1), 0) / 1000;
   const invKva    = Math.ceil(peakKw / 0.9 * 10) / 10;
 
-  // ---- 电池容量计算（只储存光伏无法直供的部分）----
-  // 白天 PSH 小时内，光伏直接供电给负载（假设负载均匀分布）
-  // 电池只需储存夜间 (24-PSH)/24 比例的用电量
-  // 自持天数按同样逻辑：每天夜间缺口 × 天数
-  const pvDirectRatio = Math.min(psh / 24, 1);
-  const pvDirectKwh   = dailyKwh * pvDirectRatio;            // 光伏每日直供电量
-  const nightKwh      = dailyKwh - pvDirectKwh;             // 每日夜间用电量（电池负责）
-  const batEnergyReq  = nightKwh * autonomy;                 // 电池需储存的总电量
-  const batReq        = batEnergyReq / (dod * BAT_EFF);     // 考虑 DoD 和效率后的电池容量
+  // ---- 逐时曲线：光伏发电 P_pv(h) 与 负载用电 P_load(h) ----
+  const E_pv = pvActual * psh * EFF;                       // 全天光伏发电量 kWh
+  const shapeRes = await getPvShape(opts.refetch);
+  const shape = shapeRes.shape, shapeSrc = shapeRes.src;
+  const pv = shape.map(f => f * E_pv);
+  const load = buildLoadCurve(loads);
+
+  // ---- 电池选型：由逐时缺口驱动（与曲线完全一致）----
+  // E_直供 = Σ min(P_pv,P_load)；E_缺口 = Σ max(0, P_load−P_pv)
+  let pvDirectKwh = 0, deficitKwh = 0;
+  for (let h = 0; h < 24; h++) {
+    pvDirectKwh += Math.min(pv[h], load[h]);
+    deficitKwh  += Math.max(0, load[h] - pv[h]);
+  }
+  const pvDirectRatio = dailyKwh > 0 ? pvDirectKwh / dailyKwh : 0;
+  // 自持=1（并网+储能）：仅覆盖当天缺口（白天用电多→缺口小→电池小）；
+  // 自持≥2（离网）：再叠加 (N−1) 天满负荷备电（无光照日由电池全额供电）
+  const batEnergyReq  = deficitKwh + dailyKwh * (autonomy - 1);
+  const batReq        = batEnergyReq / (dod * BAT_EFF);
   const batUnits      = Math.ceil(batReq / BAT_UNIT);
   const batActual     = batUnits * BAT_UNIT;
   const pvSavePct     = (pvDirectRatio * 100).toFixed(0);
@@ -590,6 +619,10 @@ function calculate() {
   const label = getActivePshLabel();
   const nasaNote = (pshSource==='nasa' && nasaMonthly)
     ? `最差月份 ${Math.min(...nasaMonthly).toFixed(1)}h/天（${MONTHS[nasaMonthly.indexOf(Math.min(...nasaMonthly))]}），最佳月份 ${Math.max(...nasaMonthly).toFixed(1)}h/天（${MONTHS[nasaMonthly.indexOf(Math.max(...nasaMonthly))]}）。` : '';
+
+  const batLine = autonomy > 1
+    ? `<tr><td>电池总储量（当天缺口 + ${autonomy-1} 天满负荷备电）</td><td>${batEnergyReq.toFixed(2)} kWh</td></tr>`
+    : `<tr><td>电池总储量（覆盖当天直供缺口）</td><td>${batEnergyReq.toFixed(2)} kWh</td></tr>`;
 
   document.getElementById('resultInner').innerHTML = `
     <div class="result-metrics">
@@ -606,28 +639,52 @@ function calculate() {
       <tr><td>建议组件数量</td><td>${pvPanels} 块</td></tr>
       <tr><td>建议装机容量</td><td>${pvActual.toFixed(1)} kWp</td></tr>
     </table>
-    <div class="section-title" style="margin-top:12px"><i class="ti ti-battery-charging" style="color:#1D9E75"></i>储能电池 — 能量平衡</div>
+    <div class="section-title" style="margin-top:12px"><i class="ti ti-battery-charging" style="color:#1D9E75"></i>储能电池 — 按逐时缺口选型</div>
     <table class="detail-table">
-      <tr><td>白天光伏直供</td><td style="color:#1D9E75">↓ ${pvDirectKwh.toFixed(2)} kWh/天（节省 ${pvSavePct}%）</td></tr>
-      <tr><td>夜间电池承担</td><td>${nightKwh.toFixed(2)} kWh/天</td></tr>
-      <tr><td>自持 ${autonomy} 天电池总储量</td><td>${batEnergyReq.toFixed(2)} kWh</td></tr>
+      <tr><td>光伏白天直供（按真实时段重叠）</td><td style="color:#1D9E75">↓ ${pvDirectKwh.toFixed(2)} kWh/天（自用率 ${pvSavePct}%）</td></tr>
+      <tr><td>光伏无法直供的缺口</td><td>${deficitKwh.toFixed(2)} kWh/天</td></tr>
+      ${batLine}
       <tr><td>放电深度(DoD) × 充放效率</td><td>${(dod*100).toFixed(0)}% × ${(BAT_EFF*100).toFixed(0)}%</td></tr>
       <tr><td>理论最小电池容量</td><td>${batReq.toFixed(2)} kWh</td></tr>
       <tr><td>建议电池组数</td><td>${batUnits} 组（每组 ${BAT_UNIT} kWh）</td></tr>
       <tr><td>建议储能容量</td><td>${batActual} kWh</td></tr>
     </table>
-    <p class="note">峰值负载 ${peakKw.toFixed(2)} kW，建议逆变器 ≥ ${invKva} kVA。${nasaNote}以上为估算值，实际工程请结合厂商规格复核。</p>
+    <p class="note">峰值负载 ${peakKw.toFixed(2)} kW，建议逆变器 ≥ ${invKva} kVA。${nasaNote}电池容量已按光伏/负载逐时缺口选型，与下方曲线同源；以上为估算值，实际工程请结合厂商规格复核。</p>
   `;
 
-  // 保存结果供曲线模块使用，并生成全天模拟曲线
   lastCalc = {
-    psh, EFF, dod, autonomy,
-    pvActual, batActual, invKva,
-    dailyKwh, peakKw,
-    dailyPvEnergy: pvActual * psh * EFF,   // 全天光伏发电量 kWh = kWp × PSH × η
-    BAT_RT: 0.95                            // 电池往返效率
+    psh, EFF, dod, autonomy, pvActual, batActual, invKva,
+    dailyKwh, peakKw, pvDirectKwh, deficitKwh,
+    pv, load, shapeSrc, BAT_RT: 0.95
   };
-  generateSimulation(true);
+  renderSimulation();
+}
+
+/* 用 lastCalc 中已建好的 pv[]/load[] 跑电池调度并渲染曲线（与配置同源） */
+function renderSimulation() {
+  if (!lastCalc) return;
+  const { pv, load, batActual, dod, BAT_RT, psh, EFF, shapeSrc } = lastCalc;
+  const disp = dispatchBattery(pv, load, batActual, dod, BAT_RT);
+  const socPct = disp.soc.map(s => disp.ceil > 0 ? s / disp.ceil * 100 : 0);
+
+  const pvTot = pv.reduce((a, b) => a + b, 0);
+  const curtTot = disp.curt.reduce((a, b) => a + b, 0);
+  const loadTot = load.reduce((a, b) => a + b, 0);
+  const gridTot = disp.grid.reduce((a, b) => a + b, 0);
+  const selfCons = pvTot > 0 ? (pvTot - curtTot) / pvTot * 100 : 0;
+  const selfSuff = loadTot > 0 ? (loadTot - gridTot) / loadTot * 100 : 0;
+  const peakPv = Math.max(...pv), peakLoad = Math.max(...load);
+
+  renderSimMetrics({ selfCons, selfSuff, pvTot, curtTot, gridTot, loadTot, peakPv, peakLoad });
+  renderSimAdvice({ selfCons, selfSuff, curtTot, gridTot, pvTot, loadTot, peakPv, peakLoad,
+    directRatio: lastCalc.dailyKwh > 0 ? lastCalc.pvDirectKwh / lastCalc.dailyKwh : 0 });
+  document.getElementById('simNote').textContent =
+    `数据源：${shapeSrc}；曲线幅值按年均 PSH=${psh}h、系统效率 ${(EFF*100).toFixed(0)}% 标定，与配置计算同源。分辨率 1 小时（本地太阳时 LST）。为全年平均典型日，单日实际受云量与季节影响会有偏差。`;
+  document.getElementById('simSub').textContent = `— ${shapeSrc}`;
+
+  renderSimChart(pv, load, disp.batP, socPct, disp.grid);
+  document.getElementById('simEmpty').style.display = 'none';
+  document.getElementById('simBody').style.display = '';
 }
 
 /* ==================== 全天模拟曲线引擎 ==================== */
@@ -731,59 +788,6 @@ function dispatchBattery(pv, load, capNameplate, dod, etaRT) {
   return { soc: socArr, batP, grid, curt, ceil };
 }
 
-/* 主流程 */
-async function generateSimulation(refetch) {
-  if (!lastCalc) return;
-  const body = document.getElementById('simBody');
-  const empty = document.getElementById('simEmpty');
-  const sub = document.getElementById('simSub');
-
-  const load = buildLoadCurve(loads);
-
-  let shape = null, shapeSrc = '';
-  if (pshSource === 'nasa' && nasaLat != null && nasaLon != null) {
-    const key = nasaLat.toFixed(2) + ',' + nasaLon.toFixed(2);
-    if (refetch || !hourlyShapeCache[key]) {
-      empty.style.display = '';
-      empty.innerHTML = '<div class="sim-loading"><i class="ti ti-loader-2 spin"></i> 正在获取 NASA POWER 逐时辐照数据，合成全年平均日内曲线…（首次约数秒）</div>';
-      body.style.display = 'none';
-    }
-    shape = await fetchHourlyShape(nasaLat, nasaLon);
-    if (shape) shapeSrc = `NASA POWER 逐时真实数据 · 全年平均（${nasaLocationName}）`;
-  }
-  if (!shape) {
-    shape = sinePVShape();
-    shapeSrc = (pshSource === 'nasa')
-      ? '理论晴空正弦模型（NASA 逐时暂不可用，已回退）'
-      : '理论晴空正弦模型（手动城市模式）';
-  }
-
-  const E = lastCalc.dailyPvEnergy;                      // kWh = kWp×PSH×η
-  const pv = shape.map(f => f * E);
-
-  const disp = dispatchBattery(pv, load, lastCalc.batActual, lastCalc.dod, lastCalc.BAT_RT);
-  const socPct = disp.soc.map(s => s / disp.ceil * 100);
-
-  const pvTot = pv.reduce((a, b) => a + b, 0);
-  const curtTot = disp.curt.reduce((a, b) => a + b, 0);
-  const loadTot = load.reduce((a, b) => a + b, 0);
-  const gridTot = disp.grid.reduce((a, b) => a + b, 0);
-  const selfCons = pvTot > 0 ? (pvTot - curtTot) / pvTot * 100 : 0;
-  const selfSuff = loadTot > 0 ? (loadTot - gridTot) / loadTot * 100 : 0;
-  const peakPv = Math.max(...pv), peakLoad = Math.max(...load);
-
-  renderSimMetrics({ selfCons, selfSuff, pvTot, curtTot, gridTot, loadTot, peakPv, peakLoad });
-  renderSimAdvice({ selfCons, selfSuff, curtTot, gridTot, pvTot, loadTot, peakPv, peakLoad });
-  document.getElementById('simNote').textContent =
-    `数据源：${shapeSrc}；曲线幅值按年均 PSH=${lastCalc.psh}h、系统效率 ${(lastCalc.EFF*100).toFixed(0)}% 标定，与配置计算口径一致。分辨率 1 小时（本地太阳时 LST）。为全年平均典型日，单日实际受云量与季节影响会有偏差。`;
-  sub.textContent = `— ${shapeSrc}`;
-
-  renderSimChart(pv, load, disp.batP, socPct, disp.grid);
-  empty.style.display = 'none';
-  body.style.display = '';
-}
-function regenSimulation(refetch) { generateSimulation(refetch); }
-
 function renderSimMetrics(m) {
   const cur = m.curtTot > 0.05, off = m.gridTot > 0.05;
   document.getElementById('simMetrics').innerHTML = `
@@ -799,13 +803,16 @@ function renderSimAdvice(m) {
   const tips = [];
   const curtPct = m.pvTot > 0 ? m.curtTot / m.pvTot * 100 : 0;
   const gridPct = m.loadTot > 0 ? m.gridTot / m.loadTot * 100 : 0;
+  const directPct = m.directRatio != null ? m.directRatio * 100 : 0;
+  if (directPct >= 55)
+    tips.push(`白天负荷占比高，光伏<b>直供率达 ${directPct.toFixed(0)}%</b>：用电与发电时段高度重合，储能只需覆盖少量缺口，电池已相应<b>配小</b>——这正是办公楼/工业日间负荷的成本优势，可作为"低储能投入、高自用率"的卖点。`);
   if (m.gridTot > 0.05)
     tips.push(`夜间/弱光时段存在 <b>${m.gridTot.toFixed(1)} kWh（占负载 ${gridPct.toFixed(0)}%）</b> 缺口：离网项目说明电池或组件偏小，可向客户提一档更大储能；并网项目由市电补足，正好作为"自发自用+削峰"卖点。`);
   if (curtPct > 15)
-    tips.push(`白天弃光 <b>${m.curtTot.toFixed(1)} kWh（占发电 ${curtPct.toFixed(0)}%）</b>：储能装不下富余电——推荐客户增配电池可直接提升自用率与回报；或把可调负载（水泵/充电/制冷蓄冷）移到正午消纳。`);
+    tips.push(`白天弃光 <b>${m.curtTot.toFixed(1)} kWh（占发电 ${curtPct.toFixed(0)}%）</b>：富余电装不下——可向客户推荐增配电池提升自用率与回报；或把可调负载（水泵/充电/制冷蓄冷）移到正午消纳。`);
   if (curtPct <= 15 && m.gridTot <= 0.05)
     tips.push(`光伏-储能-负载三者匹配良好（自用率 ${m.selfCons.toFixed(0)}%、自给率 ${m.selfSuff.toFixed(0)}%），无明显弃光与缺口，是向客户证明"配置不浪费、不缺电"的有力图表。`);
-  tips.push(`按客户真实作息微调各设备"起始时段"后再出图，曲线即客户专属——比单一报价数字更有说服力，建议随技术方案一并发送。`);
+  tips.push(`按客户真实作息微调各设备"起始时段"后再出图，配置与曲线会同步更新，曲线即客户专属——比单一报价数字更有说服力，建议随技术方案一并发送。`);
   document.getElementById('simAdvice').innerHTML =
     `<div class="adv-title"><i class="ti ti-bulb"></i>商务建议（B2B）</div>` + tips.map(t => `• ${t}`).join('<br>');
 }
