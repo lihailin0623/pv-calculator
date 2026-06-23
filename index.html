@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>光伏与储能配置计算器</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#F5F6F8;color:#1a1a1a;font-size:14px;line-height:1.6}
@@ -31,10 +32,10 @@
   .ap-card .ap-note{font-size:10px;color:#aaa;margin-top:2px}
   .ap-card .ap-hours{font-size:10px;color:#888;margin-top:1px}
 
-  .load-hdr{display:grid;grid-template-columns:1fr 70px 55px 70px 28px;gap:6px;margin-bottom:6px;padding:0 4px}
+  .load-hdr{display:grid;grid-template-columns:1fr 60px 42px 52px 56px 26px;gap:5px;margin-bottom:6px;padding:0 4px}
   .load-hdr span{font-size:11px;color:#999;text-align:center}
   .load-hdr span:first-child{text-align:left}
-  .load-row{display:grid;grid-template-columns:1fr 70px 55px 70px 28px;gap:6px;align-items:center;padding:5px 4px;border-radius:6px}
+  .load-row{display:grid;grid-template-columns:1fr 60px 42px 52px 56px 26px;gap:5px;align-items:center;padding:5px 4px;border-radius:6px}
   .load-row:hover{background:#f5f5f5}
   .load-row .dev-name{font-size:12px;color:#1a1a1a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .load-row input{width:100%;font-size:12px;text-align:center;padding:3px 4px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#1a1a1a}
@@ -100,6 +101,28 @@
   .placeholder-result{text-align:center;padding:2rem;color:#ccc;font-size:13px}
   .nasa-tag{font-size:10px;background:#E8F4FD;color:#185FA5;border:1px solid #B5D4F4;border-radius:4px;padding:1px 6px;display:inline-block}
 
+  /* ---- 模拟曲线 ---- */
+  .sim-main{padding-top:0}
+  .sim-card{grid-column:1 / -1}
+  .sim-sub{font-size:11px;color:#aaa;font-weight:400;margin-left:6px}
+  .sim-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:1rem}
+  .sim-metric{background:#F0FBF6;border:1px solid #C5ECD9;border-radius:8px;padding:.7rem .9rem}
+  .sim-metric .lbl{font-size:11px;color:#666;margin-bottom:3px}
+  .sim-metric .val{font-size:18px;font-weight:700;color:#0F6E56}
+  .sim-metric .val .unit{font-size:11px;color:#888;margin-left:2px;font-weight:400}
+  .sim-metric.warn{background:#FFF6F0;border-color:#F6C9A8}
+  .sim-metric.warn .val{color:#C76A1F}
+  .sim-metric.blue{background:#F0F6FD;border-color:#BAD6F5}
+  .sim-metric.blue .val{color:#185FA5}
+  .sim-chart-box{position:relative;height:360px;width:100%}
+  .sim-advice{margin-top:1rem;background:#FAFBF8;border:1px solid #E8EDE6;border-left:3px solid #1D9E75;border-radius:8px;padding:.85rem 1rem;font-size:12.5px;line-height:1.75;color:#384038}
+  .sim-advice b{color:#0F6E56}
+  .sim-advice .adv-title{font-weight:600;color:#0F6E56;display:flex;align-items:center;gap:5px;margin-bottom:5px}
+  .sim-loading{text-align:center;color:#1D9E75;padding:2rem;font-size:13px}
+  .spin{display:inline-block;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @media(max-width:700px){.sim-chart-box{height:300px}}
+
   @media(max-width:700px){
     .main{grid-template-columns:1fr}
     .right{position:static}
@@ -131,7 +154,7 @@
       <div id="loadEmpty" class="empty-msg"><i class="ti ti-click" style="font-size:24px;display:block;margin-bottom:8px"></i>点击上方电器卡片添加设备</div>
       <div id="loadTable" style="display:none">
         <div class="load-hdr">
-          <span>设备名称</span><span>功率(W)</span><span>数量</span><span>时长(h/天)</span><span></span>
+          <span>设备名称</span><span>功率(W)</span><span>数量</span><span>起始(时)</span><span>时长(h)</span><span></span>
         </div>
         <div id="loadList"></div>
         <div class="daily-kwh">日用电量合计：<strong id="totalKwh">0</strong> kWh/天</div>
@@ -233,71 +256,94 @@
   </div>
 </div>
 
+<!-- ============ 全天模拟曲线 ============ -->
+<div class="main sim-main">
+  <div class="card sim-card" id="simCard">
+    <div class="card-title">
+      <i class="ti ti-chart-line"></i>全天功率平衡模拟曲线
+      <span class="sim-sub" id="simSub">— 点击"计算配置方案"后生成</span>
+    </div>
+
+    <div id="simEmpty" class="placeholder-result">
+      <i class="ti ti-chart-area-line" style="font-size:22px;display:block;margin-bottom:6px"></i>
+      先在右侧完成配置计算，系统将按全年平均典型日生成<br>光伏发电 / 负载用电 / 电池充放电 三条曲线
+    </div>
+
+    <div id="simBody" style="display:none">
+      <div id="simMetrics" class="sim-metrics"></div>
+      <div class="sim-chart-box"><canvas id="simChart"></canvas></div>
+      <div id="simAdvice" class="sim-advice"></div>
+      <p class="note" id="simNote"></p>
+    </div>
+  </div>
+</div>
+
 <script>
+// start = 默认起始时刻(0-23 时)，依据典型负荷曲线规范设定，可在负载清单中手动调整
 const APPLIANCES = {
   "家用空调":[
-    {name:"挂机空调1匹",power:735,hours:8,note:"制冷/制热"},
-    {name:"挂机空调1.5匹",power:1100,hours:8,note:"制冷/制热"},
-    {name:"挂机空调2匹",power:1500,hours:8,note:"大卧室"},
-    {name:"柜机空调3匹",power:2200,hours:10,note:"客厅"},
-    {name:"中央空调(每房)",power:800,hours:10,note:"多联机"},
-    {name:"商用多联机5匹",power:3700,hours:12,note:"商业"},
+    {name:"挂机空调1匹",power:735,hours:8,start:14,note:"制冷/制热"},
+    {name:"挂机空调1.5匹",power:1100,hours:8,start:14,note:"制冷/制热"},
+    {name:"挂机空调2匹",power:1500,hours:8,start:14,note:"大卧室"},
+    {name:"柜机空调3匹",power:2200,hours:10,start:13,note:"客厅"},
+    {name:"中央空调(每房)",power:800,hours:10,start:13,note:"多联机"},
+    {name:"商用多联机5匹",power:3700,hours:12,start:9,note:"商业"},
   ],
   "厨房电器":[
-    {name:"冰箱",power:150,hours:24,note:"全天运行"},
-    {name:"冰柜",power:200,hours:24,note:"全天运行"},
-    {name:"微波炉",power:1000,hours:0.5,note:"间歇"},
-    {name:"电磁炉",power:2000,hours:1,note:"烹饪"},
-    {name:"电饭锅",power:900,hours:1,note:"烹饪"},
-    {name:"抽油烟机",power:200,hours:1,note:"配套"},
-    {name:"电烤箱",power:2000,hours:1,note:"烘焙"},
-    {name:"洗碗机",power:1800,hours:1,note:"每日一次"},
+    {name:"冰箱",power:150,hours:24,start:0,note:"全天运行"},
+    {name:"冰柜",power:200,hours:24,start:0,note:"全天运行"},
+    {name:"微波炉",power:1000,hours:0.5,start:18,note:"间歇"},
+    {name:"电磁炉",power:2000,hours:1,start:18,note:"烹饪"},
+    {name:"电饭锅",power:900,hours:1,start:17,note:"烹饪"},
+    {name:"抽油烟机",power:200,hours:1,start:18,note:"配套"},
+    {name:"电烤箱",power:2000,hours:1,start:19,note:"烘焙"},
+    {name:"洗碗机",power:1800,hours:1,start:20,note:"每日一次"},
   ],
   "照明":[
-    {name:"LED筒灯",power:12,hours:8,note:"单灯"},
-    {name:"LED球泡灯",power:9,hours:6,note:"单灯"},
-    {name:"LED灯带(5m)",power:30,hours:8,note:"装饰"},
-    {name:"荧光灯管",power:36,hours:10,note:"办公"},
-    {name:"工矿灯100W",power:100,hours:12,note:"工厂"},
-    {name:"路灯LED30W",power:30,hours:12,note:"户外"},
-    {name:"路灯LED60W",power:60,hours:12,note:"主干道"},
-    {name:"探照灯200W",power:200,hours:10,note:"安防"},
+    {name:"LED筒灯",power:12,hours:8,start:17,note:"单灯"},
+    {name:"LED球泡灯",power:9,hours:6,start:18,note:"单灯"},
+    {name:"LED灯带(5m)",power:30,hours:8,start:17,note:"装饰"},
+    {name:"荧光灯管",power:36,hours:10,start:8,note:"办公"},
+    {name:"工矿灯100W",power:100,hours:12,start:8,note:"工厂"},
+    {name:"路灯LED30W",power:30,hours:12,start:18,note:"日落-日出"},
+    {name:"路灯LED60W",power:60,hours:12,start:18,note:"日落-日出"},
+    {name:"探照灯200W",power:200,hours:10,start:19,note:"安防"},
   ],
   "家用电器":[
-    {name:"电视55寸",power:120,hours:6,note:"液晶"},
-    {name:"洗衣机",power:800,hours:1,note:"每日一次"},
-    {name:"电热水器",power:2000,hours:1.5,note:"每日加热"},
-    {name:"台式电脑",power:250,hours:8,note:"含显示器"},
-    {name:"笔记本电脑",power:65,hours:8,note:"移动办公"},
-    {name:"路由器",power:15,hours:24,note:"全天在线"},
-    {name:"电风扇",power:60,hours:8,note:"夏季"},
-    {name:"净水器",power:50,hours:4,note:"过滤"},
+    {name:"电视55寸",power:120,hours:6,start:18,note:"液晶"},
+    {name:"洗衣机",power:800,hours:1,start:10,note:"每日一次"},
+    {name:"电热水器",power:2000,hours:1.5,start:7,note:"晨峰加热"},
+    {name:"台式电脑",power:250,hours:8,start:9,note:"含显示器"},
+    {name:"笔记本电脑",power:65,hours:8,start:9,note:"移动办公"},
+    {name:"路由器",power:15,hours:24,start:0,note:"全天在线"},
+    {name:"电风扇",power:60,hours:8,start:12,note:"夏季"},
+    {name:"净水器",power:50,hours:4,start:8,note:"过滤"},
   ],
   "办公设备":[
-    {name:"激光打印机",power:600,hours:2,note:"办公"},
-    {name:"复印机",power:1200,hours:3,note:"复印"},
-    {name:"服务器1U",power:300,hours:24,note:"全天"},
-    {name:"交换机(48口)",power:100,hours:24,note:"全天"},
-    {name:"监控摄像头",power:10,hours:24,note:"单路"},
-    {name:"NVR录像机",power:25,hours:24,note:"8路"},
-    {name:"门禁控制器",power:30,hours:24,note:"含电磁锁"},
-    {name:"投影仪",power:300,hours:4,note:"会议室"},
+    {name:"激光打印机",power:600,hours:2,start:9,note:"办公"},
+    {name:"复印机",power:1200,hours:3,start:9,note:"复印"},
+    {name:"服务器1U",power:300,hours:24,start:0,note:"全天"},
+    {name:"交换机(48口)",power:100,hours:24,start:0,note:"全天"},
+    {name:"监控摄像头",power:10,hours:24,start:0,note:"单路"},
+    {name:"NVR录像机",power:25,hours:24,start:0,note:"8路"},
+    {name:"门禁控制器",power:30,hours:24,start:0,note:"含电磁锁"},
+    {name:"投影仪",power:300,hours:4,start:9,note:"会议室"},
   ],
   "商业用电":[
-    {name:"商用冷柜",power:800,hours:24,note:"超市"},
-    {name:"自动售货机",power:500,hours:24,note:"含制冷"},
-    {name:"广告灯箱",power:200,hours:12,note:"户外"},
-    {name:"充电桩7kW",power:7000,hours:4,note:"交流慢充"},
-    {name:"充电桩40kW",power:40000,hours:6,note:"直流快充"},
-    {name:"ATM机",power:300,hours:24,note:"全天"},
+    {name:"商用冷柜",power:800,hours:24,start:0,note:"超市"},
+    {name:"自动售货机",power:500,hours:24,start:0,note:"含制冷"},
+    {name:"广告灯箱",power:200,hours:12,start:18,note:"夜间"},
+    {name:"充电桩7kW",power:7000,hours:4,start:20,note:"交流慢充"},
+    {name:"充电桩40kW",power:40000,hours:6,start:9,note:"直流快充"},
+    {name:"ATM机",power:300,hours:24,start:0,note:"全天"},
   ],
   "水泵/电机":[
-    {name:"潜水泵0.75kW",power:750,hours:4,note:"灌溉"},
-    {name:"水泵1.5kW",power:1500,hours:6,note:"供水"},
-    {name:"水泵3kW",power:3000,hours:6,note:"大型供水"},
-    {name:"风机1.1kW",power:1100,hours:8,note:"通风"},
-    {name:"风机5.5kW",power:5500,hours:8,note:"工业通风"},
-    {name:"压缩机3kW",power:3000,hours:4,note:"气动"},
+    {name:"潜水泵0.75kW",power:750,hours:4,start:6,note:"灌溉"},
+    {name:"水泵1.5kW",power:1500,hours:6,start:8,note:"供水"},
+    {name:"水泵3kW",power:3000,hours:6,start:8,note:"大型供水"},
+    {name:"风机1.1kW",power:1100,hours:8,start:8,note:"通风"},
+    {name:"风机5.5kW",power:5500,hours:8,start:8,note:"工业通风"},
+    {name:"压缩机3kW",power:3000,hours:4,start:9,note:"气动"},
   ],
 };
 
@@ -315,7 +361,11 @@ let loads = [];
 let nasaPsh = null;         // 从 NASA 获取的年均 PSH
 let nasaMonthly = null;     // 12个月 PSH 数组
 let nasaLocationName = '';  // 查询地点名称
+let nasaLat = null, nasaLon = null;  // 查询坐标
 let pshSource = 'nasa';     // 'nasa' | 'manual'
+let lastCalc = null;        // 最近一次配置计算结果（供曲线模块复用）
+let simChart = null;        // Chart.js 实例
+let hourlyShapeCache = {};  // 按坐标缓存 NASA 逐时日内形状
 
 /* ---- 日照来源切换 ---- */
 function setSrc(src) {
@@ -363,6 +413,8 @@ async function fetchNASA() {
     const latF = parseFloat(lat).toFixed(4);
     const lonF = parseFloat(lon).toFixed(4);
     nasaLocationName = query;
+    nasaLat = parseFloat(latF);
+    nasaLon = parseFloat(lonF);
     setStatus(`坐标：${latF}°N, ${lonF}°E · 正在请求 NASA POWER 数据...`, 'loading');
 
     // Step 2: NASA POWER API（年气候学数据，参数 ALLSKY_SFC_SW_DWN = kWh/m²/day ≈ PSH）
@@ -480,14 +532,22 @@ function renderLoads() {
   loads.forEach((l, i) => {
     const row = document.createElement('div');
     row.className = 'load-row';
+    if (l.start === undefined) l.start = 8;
     row.innerHTML = `<span class="dev-name" title="${l.name}">${l.name}</span>
-      <input type="number" min="1" step="1" value="${l.power}" onchange="loads[${i}].power=+this.value;refreshKwh()">
-      <input type="number" min="1" step="1" value="${l.qty||1}" onchange="loads[${i}].qty=+this.value;refreshKwh()">
-      <input type="number" min="0.1" step="0.5" value="${l.hours}" onchange="loads[${i}].hours=+this.value;refreshKwh()">
+      <input type="number" min="1" step="1" value="${l.power}" onchange="loads[${i}].power=+this.value;onLoadEdit()">
+      <input type="number" min="1" step="1" value="${l.qty||1}" onchange="loads[${i}].qty=+this.value;onLoadEdit()">
+      <input type="number" min="0" max="23" step="1" value="${l.start}" title="一天中开始用电的时刻(0-23时)" onchange="loads[${i}].start=((+this.value)%24+24)%24;this.value=loads[${i}].start;onLoadEdit()">
+      <input type="number" min="0.1" max="24" step="0.5" value="${l.hours}" onchange="loads[${i}].hours=+this.value;onLoadEdit()">
       <button class="del-btn" onclick="removeLoad(${i})" title="删除"><i class="ti ti-x"></i></button>`;
     list.appendChild(row);
   });
   refreshKwh();
+}
+
+/* 负载编辑后：更新日用电量，并在曲线已生成时静默重算 */
+function onLoadEdit() {
+  refreshKwh();
+  if (lastCalc) regenSimulation(false);
 }
 
 function refreshKwh() {
@@ -558,6 +618,228 @@ function calculate() {
     </table>
     <p class="note">峰值负载 ${peakKw.toFixed(2)} kW，建议逆变器 ≥ ${invKva} kVA。${nasaNote}以上为估算值，实际工程请结合厂商规格复核。</p>
   `;
+
+  // 保存结果供曲线模块使用，并生成全天模拟曲线
+  lastCalc = {
+    psh, EFF, dod, autonomy,
+    pvActual, batActual, invKva,
+    dailyKwh, peakKw,
+    dailyPvEnergy: pvActual * psh * EFF,   // 全天光伏发电量 kWh = kWp × PSH × η
+    BAT_RT: 0.95                            // 电池往返效率
+  };
+  generateSimulation(true);
+}
+
+/* ==================== 全天模拟曲线引擎 ==================== */
+
+/* 负载逐时曲线：每台设备在 [start, start+hours) 区间按小时重叠分摊（环绕跨午夜），
+   返回 24 个小时平均功率 kW。能量守恒：Σ(P_h×1h)=Σ(功率×台数×时长)。 */
+function buildLoadCurve(loadList) {
+  const arr = new Array(24).fill(0);
+  loadList.forEach(l => {
+    const p = (l.power * (l.qty || 1)) / 1000;        // 运行时功率 kW
+    let remaining = Math.max(0, Math.min(24, l.hours || 0));
+    let pos = ((l.start || 0) % 24 + 24) % 24;
+    let guard = 0;
+    while (remaining > 1e-9 && guard++ < 48) {
+      const h = Math.floor(pos) % 24;
+      const frac = Math.min(1 - (pos - Math.floor(pos)), remaining); // 本小时覆盖比例
+      arr[h] += p * frac;                              // kWh 贡献 = 小时平均功率
+      remaining -= frac;
+      pos = (Math.floor(pos) + 1) % 24;
+    }
+  });
+  return arr;
+}
+
+/* 理论晴空正弦半波（6:00-18:00），归一化为占比，Σ=1。NASA 逐时不可用时回退 */
+function sinePVShape() {
+  const arr = new Array(24).fill(0);
+  const sr = 6, ss = 18, D = ss - sr;
+  let sum = 0;
+  for (let h = 0; h < 24; h++) {
+    const t = h + 0.5;
+    let v = (t >= sr && t <= ss) ? Math.sin(Math.PI * (t - sr) / D) : 0;
+    arr[h] = v; sum += v;
+  }
+  return arr.map(v => sum > 0 ? v / sum : 0);
+}
+
+/* NASA POWER 逐时辐照 → 全年平均日内形状（24 个归一化占比）。失败返回 null */
+async function fetchHourlyShape(lat, lon) {
+  const key = lat.toFixed(2) + ',' + lon.toFixed(2);
+  if (hourlyShapeCache[key]) return hourlyShapeCache[key];
+  const years = [2025, 2024, 2023];
+  for (const y of years) {
+    try {
+      const url = `https://power.larc.nasa.gov/api/temporal/hourly/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude=${lon}&latitude=${lat}&start=${y}0101&end=${y}1231&format=JSON&time-standard=LST`;
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const data = await res.json();
+      const obj = data && data.properties && data.properties.parameter && data.properties.parameter.ALLSKY_SFC_SW_DWN;
+      if (!obj) continue;
+      const sum = new Array(24).fill(0), cnt = new Array(24).fill(0);
+      for (const k in obj) {
+        const v = obj[k];
+        if (v === null || v <= -900) continue;          // 过滤填充值
+        const hh = parseInt(k.slice(-2), 10);
+        if (hh >= 0 && hh < 24) { sum[hh] += v; cnt[hh]++; }
+      }
+      const avg = sum.map((s, i) => cnt[i] > 0 ? s / cnt[i] : 0);
+      const tot = avg.reduce((a, b) => a + b, 0);
+      if (tot <= 0) continue;
+      const shape = avg.map(v => v / tot);
+      hourlyShapeCache[key] = shape;
+      return shape;
+    } catch (e) { /* 试下一年 */ }
+  }
+  return null;
+}
+
+/* 电池逐时调度（能量平衡）：盈余充电(×√η)，亏缺放电(÷√η)，越界则弃光/市电补充。
+   迭代多轮使 SOC 周期自洽（昼充夜放）。SOC 以标称容量为参考，下限 (1-DoD)。 */
+function dispatchBattery(pv, load, capNameplate, dod, etaRT) {
+  const ceil = capNameplate;
+  const floor = capNameplate * (1 - dod);
+  const usable = capNameplate * dod;
+  const etaC = Math.sqrt(etaRT), etaD = Math.sqrt(etaRT);
+  let soc = floor + usable * 0.5;
+  let socArr = [], batP = [], grid = [], curt = [];
+  for (let iter = 0; iter < 6; iter++) {
+    socArr = []; batP = []; grid = []; curt = [];
+    for (let h = 0; h < 24; h++) {
+      const net = pv[h] - load[h];                      // kWh（1h 内）
+      let bp = 0, gi = 0, cu = 0;
+      if (net >= 0) {
+        const room = ceil - soc;
+        const stored = Math.min(net * etaC, room);
+        soc += stored;
+        cu = net - stored / etaC;                        // 弃光
+        bp = -(stored / etaC);                           // 充电(负)
+      } else {
+        const need = -net;
+        const avail = soc - floor;
+        const drawn = Math.min(need / etaD, avail);
+        soc -= drawn;
+        const delivered = drawn * etaD;
+        gi = need - delivered;                            // 缺口/市电补充
+        bp = delivered;                                  // 放电(正)
+      }
+      socArr.push(soc); batP.push(bp); grid.push(gi); curt.push(cu);
+    }
+  }
+  return { soc: socArr, batP, grid, curt, ceil };
+}
+
+/* 主流程 */
+async function generateSimulation(refetch) {
+  if (!lastCalc) return;
+  const body = document.getElementById('simBody');
+  const empty = document.getElementById('simEmpty');
+  const sub = document.getElementById('simSub');
+
+  const load = buildLoadCurve(loads);
+
+  let shape = null, shapeSrc = '';
+  if (pshSource === 'nasa' && nasaLat != null && nasaLon != null) {
+    const key = nasaLat.toFixed(2) + ',' + nasaLon.toFixed(2);
+    if (refetch || !hourlyShapeCache[key]) {
+      empty.style.display = '';
+      empty.innerHTML = '<div class="sim-loading"><i class="ti ti-loader-2 spin"></i> 正在获取 NASA POWER 逐时辐照数据，合成全年平均日内曲线…（首次约数秒）</div>';
+      body.style.display = 'none';
+    }
+    shape = await fetchHourlyShape(nasaLat, nasaLon);
+    if (shape) shapeSrc = `NASA POWER 逐时真实数据 · 全年平均（${nasaLocationName}）`;
+  }
+  if (!shape) {
+    shape = sinePVShape();
+    shapeSrc = (pshSource === 'nasa')
+      ? '理论晴空正弦模型（NASA 逐时暂不可用，已回退）'
+      : '理论晴空正弦模型（手动城市模式）';
+  }
+
+  const E = lastCalc.dailyPvEnergy;                      // kWh = kWp×PSH×η
+  const pv = shape.map(f => f * E);
+
+  const disp = dispatchBattery(pv, load, lastCalc.batActual, lastCalc.dod, lastCalc.BAT_RT);
+  const socPct = disp.soc.map(s => s / disp.ceil * 100);
+
+  const pvTot = pv.reduce((a, b) => a + b, 0);
+  const curtTot = disp.curt.reduce((a, b) => a + b, 0);
+  const loadTot = load.reduce((a, b) => a + b, 0);
+  const gridTot = disp.grid.reduce((a, b) => a + b, 0);
+  const selfCons = pvTot > 0 ? (pvTot - curtTot) / pvTot * 100 : 0;
+  const selfSuff = loadTot > 0 ? (loadTot - gridTot) / loadTot * 100 : 0;
+  const peakPv = Math.max(...pv), peakLoad = Math.max(...load);
+
+  renderSimMetrics({ selfCons, selfSuff, pvTot, curtTot, gridTot, loadTot, peakPv, peakLoad });
+  renderSimAdvice({ selfCons, selfSuff, curtTot, gridTot, pvTot, loadTot, peakPv, peakLoad });
+  document.getElementById('simNote').textContent =
+    `数据源：${shapeSrc}；曲线幅值按年均 PSH=${lastCalc.psh}h、系统效率 ${(lastCalc.EFF*100).toFixed(0)}% 标定，与配置计算口径一致。分辨率 1 小时（本地太阳时 LST）。为全年平均典型日，单日实际受云量与季节影响会有偏差。`;
+  sub.textContent = `— ${shapeSrc}`;
+
+  renderSimChart(pv, load, disp.batP, socPct, disp.grid);
+  empty.style.display = 'none';
+  body.style.display = '';
+}
+function regenSimulation(refetch) { generateSimulation(refetch); }
+
+function renderSimMetrics(m) {
+  const cur = m.curtTot > 0.05, off = m.gridTot > 0.05;
+  document.getElementById('simMetrics').innerHTML = `
+    <div class="sim-metric"><div class="lbl">自发自用率</div><div class="val">${m.selfCons.toFixed(0)}<span class="unit">%</span></div></div>
+    <div class="sim-metric"><div class="lbl">负载自给率</div><div class="val">${m.selfSuff.toFixed(0)}<span class="unit">%</span></div></div>
+    <div class="sim-metric blue"><div class="lbl">光伏日发电</div><div class="val">${m.pvTot.toFixed(1)}<span class="unit">kWh</span></div></div>
+    <div class="sim-metric ${cur ? 'warn' : ''}"><div class="lbl">弃光电量</div><div class="val">${m.curtTot.toFixed(1)}<span class="unit">kWh</span></div></div>
+    <div class="sim-metric ${off ? 'warn' : ''}"><div class="lbl">缺口/市电补充</div><div class="val">${m.gridTot.toFixed(1)}<span class="unit">kWh</span></div></div>
+    <div class="sim-metric"><div class="lbl">光伏峰值出力</div><div class="val">${m.peakPv.toFixed(1)}<span class="unit">kW</span></div></div>`;
+}
+
+function renderSimAdvice(m) {
+  const tips = [];
+  const curtPct = m.pvTot > 0 ? m.curtTot / m.pvTot * 100 : 0;
+  const gridPct = m.loadTot > 0 ? m.gridTot / m.loadTot * 100 : 0;
+  if (m.gridTot > 0.05)
+    tips.push(`夜间/弱光时段存在 <b>${m.gridTot.toFixed(1)} kWh（占负载 ${gridPct.toFixed(0)}%）</b> 缺口：离网项目说明电池或组件偏小，可向客户提一档更大储能；并网项目由市电补足，正好作为"自发自用+削峰"卖点。`);
+  if (curtPct > 15)
+    tips.push(`白天弃光 <b>${m.curtTot.toFixed(1)} kWh（占发电 ${curtPct.toFixed(0)}%）</b>：储能装不下富余电——推荐客户增配电池可直接提升自用率与回报；或把可调负载（水泵/充电/制冷蓄冷）移到正午消纳。`);
+  if (curtPct <= 15 && m.gridTot <= 0.05)
+    tips.push(`光伏-储能-负载三者匹配良好（自用率 ${m.selfCons.toFixed(0)}%、自给率 ${m.selfSuff.toFixed(0)}%），无明显弃光与缺口，是向客户证明"配置不浪费、不缺电"的有力图表。`);
+  tips.push(`按客户真实作息微调各设备"起始时段"后再出图，曲线即客户专属——比单一报价数字更有说服力，建议随技术方案一并发送。`);
+  document.getElementById('simAdvice').innerHTML =
+    `<div class="adv-title"><i class="ti ti-bulb"></i>商务建议（B2B）</div>` + tips.map(t => `• ${t}`).join('<br>');
+}
+
+function renderSimChart(pv, load, batP, socPct, grid) {
+  const ctx = document.getElementById('simChart').getContext('2d');
+  if (simChart) simChart.destroy();
+  const labels = Array.from({ length: 24 }, (_, h) => h + ':00');
+  simChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: '光伏发电 (kW)', data: pv, borderColor: '#EF9F27', backgroundColor: 'rgba(239,159,39,0.15)', fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2, yAxisID: 'y' },
+        { label: '负载用电 (kW)', data: load, borderColor: '#E24B4A', fill: false, stepped: true, pointRadius: 0, borderWidth: 2, yAxisID: 'y' },
+        { label: '电池放电(+)/充电(−) (kW)', data: batP, borderColor: '#1D9E75', backgroundColor: 'rgba(29,158,117,0.10)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 1.8, yAxisID: 'y' },
+        { label: '电池 SOC (%)', data: socPct, borderColor: '#185FA5', borderDash: [5, 4], fill: false, tension: 0.3, pointRadius: 0, borderWidth: 1.5, yAxisID: 'y1' },
+        { label: '市电/缺口补充 (kW)', data: grid, borderColor: '#9aa0a6', backgroundColor: 'rgba(154,160,166,0.25)', fill: true, stepped: true, pointRadius: 0, borderWidth: 1, yAxisID: 'y' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { boxWidth: 12, font: { size: 11 }, padding: 10, usePointStyle: true } },
+        tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y.toFixed(2)}` } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 13 }, title: { display: true, text: '时刻（本地太阳时 LST）', font: { size: 11 } } },
+        y: { position: 'left', beginAtZero: true, title: { display: true, text: '功率 kW', font: { size: 11 } }, grid: { color: '#f0f0f0' }, ticks: { font: { size: 10 } } },
+        y1: { position: 'right', min: 0, max: 100, title: { display: true, text: 'SOC %', font: { size: 11 } }, grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
 }
 
 initCats();
