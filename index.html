@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>光伏与储能配置计算器</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#F5F6F8;color:#1a1a1a;font-size:14px;line-height:1.6}
@@ -31,10 +32,10 @@
   .ap-card .ap-note{font-size:10px;color:#aaa;margin-top:2px}
   .ap-card .ap-hours{font-size:10px;color:#888;margin-top:1px}
 
-  .load-hdr{display:grid;grid-template-columns:1fr 70px 55px 70px 28px;gap:6px;margin-bottom:6px;padding:0 4px}
+  .load-hdr{display:grid;grid-template-columns:1fr 60px 42px 52px 56px 26px;gap:5px;margin-bottom:6px;padding:0 4px}
   .load-hdr span{font-size:11px;color:#999;text-align:center}
   .load-hdr span:first-child{text-align:left}
-  .load-row{display:grid;grid-template-columns:1fr 70px 55px 70px 28px;gap:6px;align-items:center;padding:5px 4px;border-radius:6px}
+  .load-row{display:grid;grid-template-columns:1fr 60px 42px 52px 56px 26px;gap:5px;align-items:center;padding:5px 4px;border-radius:6px}
   .load-row:hover{background:#f5f5f5}
   .load-row .dev-name{font-size:12px;color:#1a1a1a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .load-row input{width:100%;font-size:12px;text-align:center;padding:3px 4px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#1a1a1a}
@@ -52,7 +53,6 @@
   input[type=text]{width:100%;padding:6px 8px;font-size:12px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#1a1a1a}
   input[type=text]:focus{outline:none;border-color:#1D9E75}
 
-  /* NASA 位置搜索区 */
   .location-box{background:#F8FFFE;border:1px solid #C5ECD9;border-radius:10px;padding:1rem;margin-bottom:.875rem}
   .location-box .loc-title{font-size:12px;font-weight:600;color:#0F6E56;margin-bottom:.625rem;display:flex;align-items:center;gap:6px}
   .search-row{display:flex;gap:6px}
@@ -100,7 +100,51 @@
   .placeholder-result{text-align:center;padding:2rem;color:#ccc;font-size:13px}
   .nasa-tag{font-size:10px;background:#E8F4FD;color:#185FA5;border:1px solid #B5D4F4;border-radius:4px;padding:1px 6px;display:inline-block}
 
+  .sim-main{padding-top:0}
+  .sim-card{grid-column:1 / -1}
+  .sim-sub{font-size:11px;color:#aaa;font-weight:400;margin-left:6px}
+
+  .sim-hero{background:linear-gradient(120deg,#1D9E75 0%,#15875F 100%);color:#fff;border-radius:12px;padding:1.1rem 1.25rem;margin-bottom:1rem;font-size:14px;line-height:1.7;box-shadow:0 4px 14px rgba(29,158,117,.18)}
+  .sim-hero b{color:#FFE08A}
+  .sim-hero .hero-ico{font-size:18px;margin-right:6px;vertical-align:-2px}
+
+  .sim-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.1rem}
+  .sim-stat{position:relative;background:#fff;border:1px solid #E6ECE8;border-radius:12px;padding:.9rem .9rem .85rem;overflow:hidden}
+  .sim-stat::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:#1D9E75}
+  .sim-stat.s-pv::before{background:#EF9F27}
+  .sim-stat.s-self::before{background:#1D9E75}
+  .sim-stat.s-suff::before{background:#185FA5}
+  .sim-stat.s-co2::before{background:#3FB984}
+  .sim-stat .st-ico{font-size:18px;color:#9aa6a0;margin-bottom:4px}
+  .sim-stat .st-lbl{font-size:11.5px;color:#6a7670;margin-bottom:2px}
+  .sim-stat .st-val{font-size:23px;font-weight:800;color:#16201b;letter-spacing:-.5px;line-height:1.1}
+  .sim-stat .st-val .u{font-size:12px;font-weight:600;color:#8a948e;margin-left:3px}
+  .sim-stat .st-foot{font-size:10px;color:#a6b0aa;margin-top:3px}
+
+  .sim-chart-card{border:1px solid #E9EDEB;border-radius:14px;padding:1rem 1rem .9rem;background:#fff}
+  .sim-chart-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem}
+  .sim-chart-title{font-size:13.5px;font-weight:700;color:#16201b}
+  .sim-chart-box{position:relative;height:380px;width:100%}
+  .sim-caption{margin-top:.7rem;font-size:11.5px;color:#7a847e;line-height:1.7;background:#F7FAF8;border-radius:8px;padding:.6rem .8rem}
+  .sim-caption .leg{display:inline-flex;align-items:center;gap:4px;margin-right:14px;white-space:nowrap}
+  .sim-caption .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+  .sim-internal{margin-top:1rem;border:1px dashed #d8ddd9;border-radius:10px;background:#FCFCFB}
+  .sim-internal summary{cursor:pointer;padding:.7rem .9rem;font-size:12.5px;font-weight:600;color:#6a7670;list-style:none;user-select:none}
+  .sim-internal summary::-webkit-details-marker{display:none}
+  .sim-internal[open] summary{border-bottom:1px dashed #e3e7e3}
+  .sim-advice{margin:.6rem .9rem 0;font-size:12.5px;line-height:1.75;color:#384038}
+  .sim-advice b{color:#0F6E56}
+  .sim-advice .adv-title{font-weight:600;color:#0F6E56;display:flex;align-items:center;gap:5px;margin-bottom:5px}
+  .sim-internal .note{margin:.6rem .9rem .9rem}
+  .sim-loading{text-align:center;color:#1D9E75;padding:2rem;font-size:13px}
+  .spin{display:inline-block;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
   @media(max-width:700px){
+    .sim-stats{grid-template-columns:repeat(2,1fr)}
+    .sim-chart-box{height:320px}
+    .sim-hero{font-size:13px}
     .main{grid-template-columns:1fr}
     .right{position:static}
     .ap-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
@@ -114,7 +158,7 @@
     <h1><i class="ti ti-solar-panel" style="font-size:20px;color:#1D9E75;margin-right:8px;vertical-align:-3px"></i>光伏与储能配置计算器</h1>
     <span class="sub">v3.0 · 业务员专用工具</span>
   </div>
-  <div style="font-size:12px;color:#999">双击此文件用浏览器打开即可使用</div>
+  <div style="font-size:12px;color:#999">MIDFINE 能源</div>
 </header>
 
 <div class="main">
@@ -131,7 +175,7 @@
       <div id="loadEmpty" class="empty-msg"><i class="ti ti-click" style="font-size:24px;display:block;margin-bottom:8px"></i>点击上方电器卡片添加设备</div>
       <div id="loadTable" style="display:none">
         <div class="load-hdr">
-          <span>设备名称</span><span>功率(W)</span><span>数量</span><span>时长(h/天)</span><span></span>
+          <span>设备名称</span><span>功率(W)</span><span>数量</span><span>起始(时)</span><span>时长(h)</span><span></span>
         </div>
         <div id="loadList"></div>
         <div class="daily-kwh">日用电量合计：<strong id="totalKwh">0</strong> kWh/天</div>
@@ -145,7 +189,6 @@
     <div class="card">
       <div class="card-title"><i class="ti ti-adjustments-horizontal"></i>系统参数</div>
 
-      <!-- NASA 日照查询 -->
       <div class="location-box">
         <div class="loc-title"><i class="ti ti-satellite" style="font-size:15px"></i>NASA POWER 实时日照数据</div>
         <div class="search-row">
@@ -163,7 +206,6 @@
         </div>
       </div>
 
-      <!-- 日照来源切换 -->
       <div class="param-item" style="margin-bottom:.75rem">
         <label>峰值日照时数来源</label>
         <div class="psh-source-row" style="margin-top:4px">
@@ -187,11 +229,11 @@
           </select>
         </div>
         <div class="param-item">
-          <label>电池类型</label>
+          <label>电池类型（磷酸铁锂）</label>
           <select id="batType">
+            <option value="0.80">磷酸铁锂 DoD 80%</option>
             <option value="0.85" selected>磷酸铁锂 DoD 85%</option>
-            <option value="0.5">铅酸蓄电池 DoD 50%</option>
-            <option value="0.9">三元锂 DoD 90%</option>
+            <option value="0.90">磷酸铁锂 DoD 90%</option>
           </select>
         </div>
         <div class="param-item">
@@ -213,7 +255,8 @@
           <label>系统效率</label>
           <select id="sysEff">
             <option value="0.75">75%（含线损/尘埃）</option>
-            <option value="0.80" selected>80%（标准估算）</option>
+            <option value="0.80">80%（标准估算）</option>
+            <option value="0.82" selected>82%（推荐默认）</option>
             <option value="0.85">85%（优质安装）</option>
           </select>
         </div>
@@ -233,71 +276,104 @@
   </div>
 </div>
 
+<div class="main sim-main">
+  <div class="card sim-card" id="simCard">
+    <div class="card-title">
+      <i class="ti ti-sun-high"></i>光伏储能系统 · 全天发用电模拟
+      <span class="sim-sub" id="simSub"></span>
+    </div>
+
+    <div id="simEmpty" class="placeholder-result">
+      <i class="ti ti-chart-area-line" style="font-size:22px;display:block;margin-bottom:6px"></i>
+      先在右侧完成配置计算，系统将按全年平均典型日生成<br>光伏发电 / 负载用电 / 电池充放电的全天运行曲线
+    </div>
+
+    <div id="simBody" style="display:none">
+      <div id="simHero" class="sim-hero"></div>
+      <div id="simStats" class="sim-stats"></div>
+
+      <div class="sim-chart-card">
+        <div class="sim-chart-head">
+          <span class="sim-chart-title">全天电力运行（典型日 · 24 小时）</span>
+        </div>
+        <div class="sim-chart-box"><canvas id="simChart"></canvas></div>
+        <div class="sim-caption" id="simCaption"></div>
+      </div>
+
+      <details class="sim-internal" id="simInternal">
+        <summary><i class="ti ti-briefcase"></i> 销售内部参考（点击展开 · 不展示给客户）</summary>
+        <div id="simAdvice" class="sim-advice"></div>
+        <p class="note" id="simNote"></p>
+      </details>
+    </div>
+  </div>
+</div>
+
 <script>
 const APPLIANCES = {
   "家用空调":[
-    {name:"挂机空调1匹",power:735,hours:8,note:"制冷/制热"},
-    {name:"挂机空调1.5匹",power:1100,hours:8,note:"制冷/制热"},
-    {name:"挂机空调2匹",power:1500,hours:8,note:"大卧室"},
-    {name:"柜机空调3匹",power:2200,hours:10,note:"客厅"},
-    {name:"中央空调(每房)",power:800,hours:10,note:"多联机"},
-    {name:"商用多联机5匹",power:3700,hours:12,note:"商业"},
+    {name:"挂机空调1匹",power:735,hours:8,start:14,note:"制冷/制热"},
+    {name:"挂机空调1.5匹",power:1100,hours:8,start:14,note:"制冷/制热"},
+    {name:"挂机空调2匹",power:1500,hours:8,start:14,note:"大卧室"},
+    {name:"柜机空调3匹",power:2200,hours:10,start:13,note:"客厅"},
+    {name:"中央空调(每房)",power:800,hours:10,start:13,note:"多联机"},
+    {name:"商用多联机5匹",power:3700,hours:12,start:9,note:"商业"},
   ],
   "厨房电器":[
-    {name:"冰箱",power:150,hours:24,note:"全天运行"},
-    {name:"冰柜",power:200,hours:24,note:"全天运行"},
-    {name:"微波炉",power:1000,hours:0.5,note:"间歇"},
-    {name:"电磁炉",power:2000,hours:1,note:"烹饪"},
-    {name:"电饭锅",power:900,hours:1,note:"烹饪"},
-    {name:"抽油烟机",power:200,hours:1,note:"配套"},
-    {name:"电烤箱",power:2000,hours:1,note:"烘焙"},
-    {name:"洗碗机",power:1800,hours:1,note:"每日一次"},
+    {name:"冰箱",power:150,hours:24,start:0,note:"全天运行"},
+    {name:"冰柜",power:200,hours:24,start:0,note:"全天运行"},
+    {name:"微波炉",power:1000,hours:0.5,start:18,note:"间歇"},
+    {name:"电磁炉",power:2000,hours:1,start:18,note:"烹饪"},
+    {name:"电饭锅",power:900,hours:1,start:17,note:"烹饪"},
+    {name:"抽油烟机",power:200,hours:1,start:18,note:"配套"},
+    {name:"电烤箱",power:2000,hours:1,start:19,note:"烘焙"},
+    {name:"洗碗机",power:1800,hours:1,start:20,note:"每日一次"},
   ],
   "照明":[
-    {name:"LED筒灯",power:12,hours:8,note:"单灯"},
-    {name:"LED球泡灯",power:9,hours:6,note:"单灯"},
-    {name:"LED灯带(5m)",power:30,hours:8,note:"装饰"},
-    {name:"荧光灯管",power:36,hours:10,note:"办公"},
-    {name:"工矿灯100W",power:100,hours:12,note:"工厂"},
-    {name:"路灯LED30W",power:30,hours:12,note:"户外"},
-    {name:"路灯LED60W",power:60,hours:12,note:"主干道"},
-    {name:"探照灯200W",power:200,hours:10,note:"安防"},
+    {name:"LED筒灯",power:12,hours:8,start:17,note:"单灯"},
+    {name:"LED球泡灯",power:9,hours:6,start:18,note:"单灯"},
+    {name:"LED灯带(5m)",power:30,hours:8,start:17,note:"装饰"},
+    {name:"荧光灯管",power:36,hours:10,start:8,note:"办公"},
+    {name:"工矿灯100W",power:100,hours:12,start:8,note:"工厂"},
+    {name:"路灯LED30W",power:30,hours:12,start:18,note:"日落-日出"},
+    {name:"路灯LED60W",power:60,hours:12,start:18,note:"日落-日出"},
+    {name:"探照灯200W",power:200,hours:10,start:19,note:"安防"},
   ],
   "家用电器":[
-    {name:"电视55寸",power:120,hours:6,note:"液晶"},
-    {name:"洗衣机",power:800,hours:1,note:"每日一次"},
-    {name:"电热水器",power:2000,hours:1.5,note:"每日加热"},
-    {name:"台式电脑",power:250,hours:8,note:"含显示器"},
-    {name:"笔记本电脑",power:65,hours:8,note:"移动办公"},
-    {name:"路由器",power:15,hours:24,note:"全天在线"},
-    {name:"电风扇",power:60,hours:8,note:"夏季"},
-    {name:"净水器",power:50,hours:4,note:"过滤"},
+    {name:"电视55寸",power:120,hours:6,start:18,note:"液晶"},
+    {name:"洗衣机",power:800,hours:1,start:10,note:"每日一次"},
+    {name:"电热水器",power:2000,hours:1.5,start:7,note:"晨峰加热"},
+    {name:"台式电脑",power:250,hours:8,start:9,note:"含显示器"},
+    {name:"笔记本电脑",power:65,hours:8,start:9,note:"移动办公"},
+    {name:"路由器",power:15,hours:24,start:0,note:"全天在线"},
+    {name:"电风扇",power:60,hours:8,start:12,note:"夏季"},
+    {name:"净水器",power:50,hours:4,start:8,note:"过滤"},
   ],
   "办公设备":[
-    {name:"激光打印机",power:600,hours:2,note:"办公"},
-    {name:"复印机",power:1200,hours:3,note:"复印"},
-    {name:"服务器1U",power:300,hours:24,note:"全天"},
-    {name:"交换机(48口)",power:100,hours:24,note:"全天"},
-    {name:"监控摄像头",power:10,hours:24,note:"单路"},
-    {name:"NVR录像机",power:25,hours:24,note:"8路"},
-    {name:"门禁控制器",power:30,hours:24,note:"含电磁锁"},
-    {name:"投影仪",power:300,hours:4,note:"会议室"},
+    {name:"激光打印机",power:600,hours:2,start:9,note:"办公"},
+    {name:"复印机",power:1200,hours:3,start:9,note:"复印"},
+    {name:"服务器1U",power:300,hours:24,start:0,note:"全天"},
+    {name:"交换机(48口)",power:100,hours:24,start:0,note:"全天"},
+    {name:"监控摄像头",power:10,hours:24,start:0,note:"单路"},
+    {name:"NVR录像机",power:25,hours:24,start:0,note:"8路"},
+    {name:"门禁控制器",power:30,hours:24,start:0,note:"含电磁锁"},
+    {name:"投影仪",power:300,hours:4,start:9,note:"会议室"},
   ],
   "商业用电":[
-    {name:"商用冷柜",power:800,hours:24,note:"超市"},
-    {name:"自动售货机",power:500,hours:24,note:"含制冷"},
-    {name:"广告灯箱",power:200,hours:12,note:"户外"},
-    {name:"充电桩7kW",power:7000,hours:4,note:"交流慢充"},
-    {name:"充电桩40kW",power:40000,hours:6,note:"直流快充"},
-    {name:"ATM机",power:300,hours:24,note:"全天"},
+    {name:"商用冷柜",power:800,hours:24,start:0,note:"超市"},
+    {name:"自动售货机",power:500,hours:24,start:0,note:"含制冷"},
+    {name:"广告灯箱",power:200,hours:12,start:18,note:"夜间"},
+    {name:"充电桩7kW",power:7000,hours:4,start:20,note:"交流慢充"},
+    {name:"充电桩40kW",power:40000,hours:6,start:9,note:"直流快充"},
+    {name:"ATM机",power:300,hours:24,start:0,note:"全天"},
   ],
   "水泵/电机":[
-    {name:"潜水泵0.75kW",power:750,hours:4,note:"灌溉"},
-    {name:"水泵1.5kW",power:1500,hours:6,note:"供水"},
-    {name:"水泵3kW",power:3000,hours:6,note:"大型供水"},
-    {name:"风机1.1kW",power:1100,hours:8,note:"通风"},
-    {name:"风机5.5kW",power:5500,hours:8,note:"工业通风"},
-    {name:"压缩机3kW",power:3000,hours:4,note:"气动"},
+    {name:"潜水泵0.75kW",power:750,hours:4,start:6,note:"灌溉"},
+    {name:"水泵1.5kW",power:1500,hours:6,start:8,note:"供水"},
+    {name:"水泵3kW",power:3000,hours:6,start:8,note:"大型供水"},
+    {name:"风机1.1kW",power:1100,hours:8,start:8,note:"通风"},
+    {name:"风机5.5kW",power:5500,hours:8,start:8,note:"工业通风"},
+    {name:"压缩机3kW",power:3000,hours:4,start:9,note:"气动"},
   ],
 };
 
@@ -312,12 +388,15 @@ const CITIES = {
 const MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 
 let loads = [];
-let nasaPsh = null;         // 从 NASA 获取的年均 PSH
-let nasaMonthly = null;     // 12个月 PSH 数组
-let nasaLocationName = '';  // 查询地点名称
-let pshSource = 'nasa';     // 'nasa' | 'manual'
+let nasaPsh = null;
+let nasaMonthly = null;
+let nasaLocationName = '';
+let nasaLat = null, nasaLon = null;
+let pshSource = 'nasa';
+let lastCalc = null;
+let simChart = null;
+let hourlyShapeCache = {};
 
-/* ---- 日照来源切换 ---- */
 function setSrc(src) {
   pshSource = src;
   document.getElementById('srcNasa').classList.toggle('active', src==='nasa');
@@ -337,49 +416,30 @@ function getActivePshLabel() {
   return s.options[s.selectedIndex].text;
 }
 
-/* ---- NASA POWER 查询 ---- */
 async function fetchNASA() {
   const query = document.getElementById('locInput').value.trim();
   if (!query) { setStatus('请输入地名', 'error'); return; }
-
   const btn = document.getElementById('searchBtn');
   btn.disabled = true;
   setStatus('正在查询坐标...', 'loading');
   document.getElementById('pshResult').style.display = 'none';
-
   try {
-    // Step 1: 地理编码（OpenStreetMap Nominatim）
     const geoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&accept-language=zh`;
     const geoRes = await fetch(geoUrl, { headers: { 'User-Agent': 'PV-Calculator/3.0' } });
     const geoData = await geoRes.json();
-
-    if (!geoData.length) {
-      setStatus('未找到该地点，请尝试更详细的地名', 'error');
-      btn.disabled = false;
-      return;
-    }
-
-    const { lat, lon, display_name } = geoData[0];
-    const latF = parseFloat(lat).toFixed(4);
-    const lonF = parseFloat(lon).toFixed(4);
-    nasaLocationName = query;
+    if (!geoData.length) { setStatus('未找到该地点，请尝试更详细的地名', 'error'); btn.disabled=false; return; }
+    const { lat, lon } = geoData[0];
+    const latF = parseFloat(lat).toFixed(4), lonF = parseFloat(lon).toFixed(4);
+    nasaLocationName = query; nasaLat = parseFloat(latF); nasaLon = parseFloat(lonF);
     setStatus(`坐标：${latF}°N, ${lonF}°E · 正在请求 NASA POWER 数据...`, 'loading');
-
-    // Step 2: NASA POWER API（年气候学数据，参数 ALLSKY_SFC_SW_DWN = kWh/m²/day ≈ PSH）
     const nasaUrl = `https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude=${lonF}&latitude=${latF}&format=JSON`;
     const nasaRes = await fetch(nasaUrl);
     const nasaData = await nasaRes.json();
-
     const monthly = nasaData.properties.parameter.ALLSKY_SFC_SW_DWN;
-    const vals = Object.entries(monthly)
-      .filter(([k]) => k !== 'ANN')
-      .map(([,v]) => parseFloat(v));
+    const vals = Object.entries(monthly).filter(([k])=>k!=='ANN').map(([,v])=>parseFloat(v));
     const ann = parseFloat(monthly['ANN']);
-
     nasaPsh = parseFloat(ann.toFixed(2));
     nasaMonthly = vals;
-
-    // 更新 UI
     document.getElementById('pshVal').textContent = nasaPsh;
     document.getElementById('coordInfo').textContent = `${latF}°N, ${lonF}°E`;
     renderMonthlyBars(vals);
@@ -387,8 +447,7 @@ async function fetchNASA() {
     document.getElementById('nasaPshRow').innerHTML =
       `<span style="color:#0F6E56;font-weight:600">${nasaPsh} h/天</span> <span class="nasa-tag">NASA POWER · ${query}</span>`;
     setStatus('', '');
-
-  } catch (e) {
+  } catch(e) {
     setStatus('查询失败，请检查网络连接后重试', 'error');
     console.error(e);
   }
@@ -403,27 +462,22 @@ function setStatus(msg, type) {
 
 function renderMonthlyBars(vals) {
   const max = Math.max(...vals);
-  const container = document.getElementById('pshMonthly');
-  container.innerHTML = `
+  document.getElementById('pshMonthly').innerHTML = `
     <div style="font-size:10px;color:#aaa;margin-bottom:2px">各月峰值日照时数 (h/天)</div>
     <div class="month-bars">
-      ${vals.map((v,i)=>`<div class="month-bar" style="height:${Math.round(v/max*46)+4}px">
-        <div class="tip">${MONTHS[i]}: ${v.toFixed(1)}h</div>
-      </div>`).join('')}
+      ${vals.map((v,i)=>`<div class="month-bar" style="height:${Math.round(v/max*46)+4}px"><div class="tip">${MONTHS[i]}: ${v.toFixed(1)}h</div></div>`).join('')}
     </div>
-    <div class="month-labels">${MONTHS.map(m=>`<span>${m.replace('月','')}</span>`).join('')}</div>
-  `;
+    <div class="month-labels">${MONTHS.map(m=>`<span>${m.replace('月','')}</span>`).join('')}</div>`;
 }
 
-/* ---- 电器库 ---- */
 function initCats() {
   const el = document.getElementById('catTabs');
   Object.keys(APPLIANCES).forEach((cat, i) => {
     const b = document.createElement('button');
-    b.className = 'cat-btn' + (i===0 ? ' active' : '');
+    b.className = 'cat-btn' + (i===0?' active':'');
     b.textContent = cat;
     b.onclick = () => {
-      document.querySelectorAll('.cat-btn').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.cat-btn').forEach(x=>x.classList.remove('active'));
       b.classList.add('active');
       renderGrid(cat);
     };
@@ -449,94 +503,130 @@ function initCities() {
   const s = document.getElementById('citySelect');
   Object.entries(CITIES).forEach(([city, psh]) => {
     const o = document.createElement('option');
-    o.value = psh;
-    o.textContent = `${city} (${psh}h)`;
-    if (city === '广州') o.selected = true;
+    o.value = psh; o.textContent = `${city} (${psh}h)`;
+    if (city==='广州') o.selected = true;
     s.appendChild(o);
   });
 }
 
-/* ---- 负载 ---- */
 function addLoad(ap) {
-  const ex = loads.find(l => l.name === ap.name);
-  if (ex) { ex.qty = (ex.qty||1) + 1; }
-  else { loads.push({...ap, qty:1}); }
+  const ex = loads.find(l=>l.name===ap.name);
+  if (ex) { ex.qty=(ex.qty||1)+1; } else { loads.push({...ap,qty:1}); }
   renderLoads();
 }
 
-function removeLoad(i) { loads.splice(i, 1); renderLoads(); }
+function removeLoad(i) { loads.splice(i,1); renderLoads(); }
 
 function getDailyKwh() {
-  return loads.reduce((s, l) => s + (l.power * (l.qty||1) * l.hours) / 1000, 0);
+  return loads.reduce((s,l)=>s+(l.power*(l.qty||1)*l.hours)/1000, 0);
 }
 
 function renderLoads() {
-  const empty = document.getElementById('loadEmpty');
-  const table = document.getElementById('loadTable');
-  const list  = document.getElementById('loadList');
-  if (loads.length === 0) { empty.style.display=''; table.style.display='none'; return; }
-  empty.style.display = 'none'; table.style.display = '';
-  list.innerHTML = '';
-  loads.forEach((l, i) => {
-    const row = document.createElement('div');
-    row.className = 'load-row';
-    row.innerHTML = `<span class="dev-name" title="${l.name}">${l.name}</span>
-      <input type="number" min="1" step="1" value="${l.power}" onchange="loads[${i}].power=+this.value;refreshKwh()">
-      <input type="number" min="1" step="1" value="${l.qty||1}" onchange="loads[${i}].qty=+this.value;refreshKwh()">
-      <input type="number" min="0.1" step="0.5" value="${l.hours}" onchange="loads[${i}].hours=+this.value;refreshKwh()">
+  const empty=document.getElementById('loadEmpty'), table=document.getElementById('loadTable'), list=document.getElementById('loadList');
+  if (!loads.length) { empty.style.display=''; table.style.display='none'; return; }
+  empty.style.display='none'; table.style.display='';
+  list.innerHTML='';
+  loads.forEach((l,i)=>{
+    if (l.start===undefined) l.start=8;
+    const row=document.createElement('div');
+    row.className='load-row';
+    row.innerHTML=`<span class="dev-name" title="${l.name}">${l.name}</span>
+      <input type="number" min="1" step="1" value="${l.power}" onchange="loads[${i}].power=+this.value;onLoadEdit()">
+      <input type="number" min="1" step="1" value="${l.qty||1}" onchange="loads[${i}].qty=+this.value;onLoadEdit()">
+      <input type="number" min="0" max="23" step="1" value="${l.start}" onchange="loads[${i}].start=((+this.value)%24+24)%24;this.value=loads[${i}].start;onLoadEdit()">
+      <input type="number" min="0.1" max="24" step="0.5" value="${l.hours}" onchange="loads[${i}].hours=+this.value;onLoadEdit()">
       <button class="del-btn" onclick="removeLoad(${i})" title="删除"><i class="ti ti-x"></i></button>`;
     list.appendChild(row);
   });
   refreshKwh();
 }
 
-function refreshKwh() {
-  const el = document.getElementById('totalKwh');
-  if (el) el.textContent = getDailyKwh().toFixed(2);
+function onLoadEdit() { refreshKwh(); if (lastCalc) calculate({silent:true,refetch:false}); }
+function refreshKwh() { const el=document.getElementById('totalKwh'); if(el) el.textContent=getDailyKwh().toFixed(2); }
+
+async function getPvShape(refetch) {
+  if (pshSource==='nasa' && nasaLat!=null && nasaLon!=null) {
+    const key=nasaLat.toFixed(2)+','+nasaLon.toFixed(2);
+    if (refetch || !hourlyShapeCache[key]) {
+      const empty=document.getElementById('simEmpty');
+      empty.style.display='';
+      empty.innerHTML='<div class="sim-loading"><i class="ti ti-loader-2 spin"></i> 正在获取 NASA POWER 逐时辐照数据，合成全年平均日内曲线…（首次约数秒）</div>';
+      document.getElementById('simBody').style.display='none';
+    }
+    const s=await fetchHourlyShape(nasaLat, nasaLon);
+    if (s) return {shape:s, src:`NASA POWER 逐时真实数据 · 全年平均（${nasaLocationName}）`};
+    return {shape:sinePVShape(), src:'理论晴空正弦模型（NASA 逐时暂不可用，已回退）'};
+  }
+  return {shape:sinePVShape(), src:'理论晴空正弦模型（手动城市模式）'};
 }
 
-/* ---- 计算 ---- */
-function calculate() {
-  if (loads.length === 0) { alert('请先选择至少一个负载设备'); return; }
-  const psh = getActivePsh();
-  if (!psh) { alert(pshSource==='nasa' ? '请先查询 NASA 日照数据，或切换为手动选择城市' : '请选择城市'); return; }
+const INV_LADDER = [3,5,6,8,10,12,15,18,20,25,30,40,50,60,70,80,100,125];
+function chooseInverter(req) {
+  if (req<=0) return {unit:0,count:0,total:0,text:'—'};
+  if (req<=125) { const s=INV_LADDER.find(v=>v>=req); return {unit:s,count:1,total:s,text:`${s} kVA`}; }
+  const count=Math.ceil(req/125);
+  return {unit:125,count,total:125*count,text:`${count} × 125 kVA 并机 = ${125*count} kVA`};
+}
 
-  const autonomy  = +document.getElementById('autonomy').value;
-  const dod       = +document.getElementById('batType').value;
-  const panelUnit = +document.getElementById('panelSpec').value;
-  const EFF       = +document.getElementById('sysEff').value;
-  const BAT_EFF   = 0.95, BAT_UNIT = 5;
+const BAT_MODULES=[5,10,16];
+function chooseBattery(req) {
+  if (req<=0) return {unit:0,count:0,total:0,text:'无需储能（光伏白天可全额直供）'};
+  let best=null;
+  BAT_MODULES.forEach(M=>{
+    const N=Math.ceil(req/M), total=N*M;
+    if (!best||total<best.total||(total===best.total&&N<best.count)) best={unit:M,count:N,total};
+  });
+  best.text=`${best.count} × ${best.unit} kWh = ${best.total} kWh`;
+  return best;
+}
 
-  const dailyKwh  = getDailyKwh();
-  const pvReq     = dailyKwh / (psh * EFF);
-  const pvPanels  = Math.ceil(pvReq / panelUnit);
-  const pvActual  = pvPanels * panelUnit;
-  const peakKw    = loads.reduce((s, l) => s + l.power * (l.qty||1), 0) / 1000;
-  const invKva    = Math.ceil(peakKw / 0.9 * 10) / 10;
-
-  // ---- 电池容量计算（只储存光伏无法直供的部分）----
-  // 白天 PSH 小时内，光伏直接供电给负载（假设负载均匀分布）
-  // 电池只需储存夜间 (24-PSH)/24 比例的用电量
-  // 自持天数按同样逻辑：每天夜间缺口 × 天数
-  const pvDirectRatio = Math.min(psh / 24, 1);
-  const pvDirectKwh   = dailyKwh * pvDirectRatio;            // 光伏每日直供电量
-  const nightKwh      = dailyKwh - pvDirectKwh;             // 每日夜间用电量（电池负责）
-  const batEnergyReq  = nightKwh * autonomy;                 // 电池需储存的总电量
-  const batReq        = batEnergyReq / (dod * BAT_EFF);     // 考虑 DoD 和效率后的电池容量
-  const batUnits      = Math.ceil(batReq / BAT_UNIT);
-  const batActual     = batUnits * BAT_UNIT;
-  const pvSavePct     = (pvDirectRatio * 100).toFixed(0);
-
-  const label = getActivePshLabel();
-  const nasaNote = (pshSource==='nasa' && nasaMonthly)
-    ? `最差月份 ${Math.min(...nasaMonthly).toFixed(1)}h/天（${MONTHS[nasaMonthly.indexOf(Math.min(...nasaMonthly))]}），最佳月份 ${Math.max(...nasaMonthly).toFixed(1)}h/天（${MONTHS[nasaMonthly.indexOf(Math.max(...nasaMonthly))]}）。` : '';
-
-  document.getElementById('resultInner').innerHTML = `
+async function calculate(opts) {
+  opts=opts||{};
+  const silent=!!opts.silent;
+  if (!loads.length) { if(!silent) alert('请先选择至少一个负载设备'); return; }
+  const psh=getActivePsh();
+  if (!psh) { if(!silent) alert(pshSource==='nasa'?'请先查询 NASA 日照数据，或切换为手动选择城市':'请选择城市'); return; }
+  const autonomy=+document.getElementById('autonomy').value;
+  const dod=+document.getElementById('batType').value;
+  const panelUnit=+document.getElementById('panelSpec').value;
+  const EFF=+document.getElementById('sysEff').value;
+  const BAT_EFF=0.95;
+  const dailyKwh=getDailyKwh();
+  const pvReq=dailyKwh/(psh*EFF);
+  const pvPanels=Math.ceil(pvReq/panelUnit);
+  const pvActual=pvPanels*panelUnit;
+  const peakKw=loads.reduce((s,l)=>s+l.power*(l.qty||1),0)/1000;
+  const invReq=peakKw/0.9;
+  const inv=chooseInverter(invReq);
+  const invKva=inv.total;
+  const E_pv=pvActual*psh*EFF;
+  const shapeRes=await getPvShape(opts.refetch);
+  const shape=shapeRes.shape, shapeSrc=shapeRes.src;
+  const pv=shape.map(f=>f*E_pv);
+  const load=buildLoadCurve(loads);
+  let pvDirectKwh=0, deficitKwh=0;
+  for (let h=0;h<24;h++) {
+    pvDirectKwh+=Math.min(pv[h],load[h]);
+    deficitKwh+=Math.max(0,load[h]-pv[h]);
+  }
+  const pvDirectRatio=dailyKwh>0?pvDirectKwh/dailyKwh:0;
+  const batEnergyReq=deficitKwh+dailyKwh*(autonomy-1);
+  const batReq=batEnergyReq/(dod*BAT_EFF);
+  const bat=chooseBattery(batReq);
+  const batActual=bat.total;
+  const pvSavePct=(pvDirectRatio*100).toFixed(0);
+  const label=getActivePshLabel();
+  const nasaNote=(pshSource==='nasa'&&nasaMonthly)
+    ?`最差月份 ${Math.min(...nasaMonthly).toFixed(1)}h/天（${MONTHS[nasaMonthly.indexOf(Math.min(...nasaMonthly))]}），最佳月份 ${Math.max(...nasaMonthly).toFixed(1)}h/天（${MONTHS[nasaMonthly.indexOf(Math.max(...nasaMonthly))]}）。`:'';
+  const batLine=autonomy>1
+    ?`<tr><td>电池总储量（当天缺口 + ${autonomy-1} 天满负荷备电）</td><td>${batEnergyReq.toFixed(2)} kWh</td></tr>`
+    :`<tr><td>电池总储量（覆盖当天直供缺口）</td><td>${batEnergyReq.toFixed(2)} kWh</td></tr>`;
+  document.getElementById('resultInner').innerHTML=`
     <div class="result-metrics">
       <div class="metric"><div class="lbl">日用电量</div><div class="val">${dailyKwh.toFixed(1)}<span class="unit">kWh</span></div></div>
       <div class="metric"><div class="lbl">光伏装机</div><div class="val">${pvActual.toFixed(1)}<span class="unit">kWp</span></div></div>
       <div class="metric"><div class="lbl">储能容量</div><div class="val">${batActual}<span class="unit">kWh</span></div></div>
-      <div class="metric gray"><div class="lbl">逆变器</div><div class="val">${invKva.toFixed(1)}<span class="unit">kVA</span></div></div>
+      <div class="metric gray"><div class="lbl">逆变器</div><div class="val">${invKva}<span class="unit">kVA</span></div></div>
     </div>
     <div class="section-title"><i class="ti ti-sun" style="color:#EF9F27"></i>光伏组件 — ${label}</div>
     <table class="detail-table">
@@ -546,18 +636,185 @@ function calculate() {
       <tr><td>建议组件数量</td><td>${pvPanels} 块</td></tr>
       <tr><td>建议装机容量</td><td>${pvActual.toFixed(1)} kWp</td></tr>
     </table>
-    <div class="section-title" style="margin-top:12px"><i class="ti ti-battery-charging" style="color:#1D9E75"></i>储能电池 — 能量平衡</div>
+    <div class="section-title" style="margin-top:12px"><i class="ti ti-battery-charging" style="color:#1D9E75"></i>储能电池 — 按逐时缺口选型</div>
     <table class="detail-table">
-      <tr><td>白天光伏直供</td><td style="color:#1D9E75">↓ ${pvDirectKwh.toFixed(2)} kWh/天（节省 ${pvSavePct}%）</td></tr>
-      <tr><td>夜间电池承担</td><td>${nightKwh.toFixed(2)} kWh/天</td></tr>
-      <tr><td>自持 ${autonomy} 天电池总储量</td><td>${batEnergyReq.toFixed(2)} kWh</td></tr>
+      <tr><td>光伏白天直供（按真实时段重叠）</td><td style="color:#1D9E75">↓ ${pvDirectKwh.toFixed(2)} kWh/天（自用率 ${pvSavePct}%）</td></tr>
+      <tr><td>光伏无法直供的缺口</td><td>${deficitKwh.toFixed(2)} kWh/天</td></tr>
+      ${batLine}
       <tr><td>放电深度(DoD) × 充放效率</td><td>${(dod*100).toFixed(0)}% × ${(BAT_EFF*100).toFixed(0)}%</td></tr>
       <tr><td>理论最小电池容量</td><td>${batReq.toFixed(2)} kWh</td></tr>
-      <tr><td>建议电池组数</td><td>${batUnits} 组（每组 ${BAT_UNIT} kWh）</td></tr>
-      <tr><td>建议储能容量</td><td>${batActual} kWh</td></tr>
+      <tr><td>建议电池配置</td><td style="color:#0F6E56;font-weight:600">${bat.text}</td></tr>
     </table>
-    <p class="note">峰值负载 ${peakKw.toFixed(2)} kW，建议逆变器 ≥ ${invKva} kVA。${nasaNote}以上为估算值，实际工程请结合厂商规格复核。</p>
-  `;
+    <div class="section-title" style="margin-top:12px"><i class="ti ti-plug" style="color:#185FA5"></i>逆变器选型</div>
+    <table class="detail-table">
+      <tr><td>峰值负载 / 需求视在功率</td><td>${peakKw.toFixed(2)} kW / ${invReq.toFixed(1)} kVA</td></tr>
+      <tr><td>建议逆变器配置</td><td style="color:#185FA5;font-weight:600">${inv.text}</td></tr>
+    </table>
+    <p class="note">${nasaNote}电池与逆变器均按标准型号选型（逆变器超 125 kVA、电池超单模组容量时相同型号并机）；电池容量按光伏/负载逐时缺口选型，与下方曲线同源。以上为估算值，实际工程请结合厂商规格复核。</p>`;
+  lastCalc={psh,EFF,dod,autonomy,pvActual,batActual,invKva,invText:inv.text,batText:bat.text,dailyKwh,peakKw,pvDirectKwh,deficitKwh,pv,load,shapeSrc,BAT_RT:0.95};
+  renderSimulation();
+}
+
+function renderSimulation() {
+  if (!lastCalc) return;
+  const {pv,load,batActual,dod,BAT_RT,psh,EFF,shapeSrc}=lastCalc;
+  const disp=dispatchBattery(pv,load,batActual,dod,BAT_RT);
+  const socPct=disp.soc.map(s=>disp.ceil>0?s/disp.ceil*100:0);
+  const pvTot=pv.reduce((a,b)=>a+b,0);
+  const curtTot=disp.curt.reduce((a,b)=>a+b,0);
+  const loadTot=load.reduce((a,b)=>a+b,0);
+  const gridTot=disp.grid.reduce((a,b)=>a+b,0);
+  const pvUsed=pvTot-curtTot;
+  const selfCons=pvTot>0?pvUsed/pvTot*100:0;
+  const selfSuff=loadTot>0?(loadTot-gridTot)/loadTot*100:0;
+  const gridPct=loadTot>0?gridTot/loadTot*100:0;
+  const co2t=pvUsed*365*0.581/1000;
+  const gridSentence=gridTot>0.05?`，仅 <b>${gridPct.toFixed(0)}%</b> 需电网补充`:`，全天用电基本无需外购电`;
+  document.getElementById('simHero').innerHTML=
+    `<i class="ti ti-bulb-filled hero-ico"></i>白天太阳能优先供电、同时为电池充电；夜间由电池放电供电——本系统全天用电自给率约 <b>${selfSuff.toFixed(0)}%</b>，绿电自用率 <b>${selfCons.toFixed(0)}%</b>${gridSentence}。`;
+  document.getElementById('simStats').innerHTML=`
+    <div class="sim-stat s-pv"><div class="st-ico"><i class="ti ti-solar-panel"></i></div>
+      <div class="st-lbl">日均发电量</div><div class="st-val">${pvTot.toFixed(1)}<span class="u">kWh</span></div>
+      <div class="st-foot">年发电约 ${(pvTot*365/1000).toFixed(1)} 兆瓦时</div></div>
+    <div class="sim-stat s-self"><div class="st-ico"><i class="ti ti-recycle"></i></div>
+      <div class="st-lbl">绿电自用率</div><div class="st-val">${selfCons.toFixed(0)}<span class="u">%</span></div>
+      <div class="st-foot">发出的电被用掉的比例</div></div>
+    <div class="sim-stat s-suff"><div class="st-ico"><i class="ti ti-plug-connected"></i></div>
+      <div class="st-lbl">用电自给率</div><div class="st-val">${selfSuff.toFixed(0)}<span class="u">%</span></div>
+      <div class="st-foot">用电由光伏+电池满足的比例</div></div>
+    <div class="sim-stat s-co2"><div class="st-ico"><i class="ti ti-leaf"></i></div>
+      <div class="st-lbl">年等效减碳</div><div class="st-val">${co2t.toFixed(1)}<span class="u">吨</span></div>
+      <div class="st-foot">≈ 种植 ${Math.round(co2t*1000/18)} 棵树/年</div></div>`;
+  document.getElementById('simCaption').innerHTML=
+    `<span class="leg"><span class="dot" style="background:#F4A52A"></span>光伏发电</span>`+
+    `<span class="leg"><span class="dot" style="background:#274B8E"></span>负载用电</span>`+
+    `<span class="leg"><span class="dot" style="background:#1FA978"></span>电池电量</span>`+
+    (gridTot>0.05?`<span class="leg"><span class="dot" style="background:#E0625E"></span>电网补充</span>`:'')+
+    `<br>橙色区高于蓝线时，富余电为电池充电（电量上升）；夜间蓝线靠电池放电支撑（电量下降）。`;
+  renderSimAdvice({selfCons,selfSuff,curtTot,gridTot,pvTot,loadTot,peakPv:Math.max(...pv),peakLoad:Math.max(...load),directRatio:lastCalc.dailyKwh>0?lastCalc.pvDirectKwh/lastCalc.dailyKwh:0});
+  document.getElementById('simNote').textContent=`数据源：${shapeSrc}；曲线幅值按年均 PSH=${psh}h、系统效率 ${(EFF*100).toFixed(0)}% 标定。分辨率 1 小时（本地太阳时 LST）。为全年平均典型日，单日实际受云量/季节影响会有偏差。减碳按 0.581 kg/kWh 电网排放因子估算。`;
+  document.getElementById('simSub').textContent=shapeSrc?`· ${shapeSrc.split('（')[0]}`:'';
+  renderSimChart(pv,load,disp.batP,socPct,disp.grid);
+  document.getElementById('simEmpty').style.display='none';
+  document.getElementById('simBody').style.display='';
+}
+
+function buildLoadCurve(loadList) {
+  const arr=new Array(24).fill(0);
+  loadList.forEach(l=>{
+    const p=(l.power*(l.qty||1))/1000;
+    let remaining=Math.max(0,Math.min(24,l.hours||0));
+    let pos=((l.start||0)%24+24)%24, guard=0;
+    while (remaining>1e-9&&guard++<48) {
+      const h=Math.floor(pos)%24;
+      const frac=Math.min(1-(pos-Math.floor(pos)),remaining);
+      arr[h]+=p*frac; remaining-=frac; pos=(Math.floor(pos)+1)%24;
+    }
+  });
+  return arr;
+}
+
+function sinePVShape() {
+  const arr=new Array(24).fill(0), sr=6, ss=18, D=ss-sr; let sum=0;
+  for (let h=0;h<24;h++) { const t=h+.5; let v=(t>=sr&&t<=ss)?Math.sin(Math.PI*(t-sr)/D):0; arr[h]=v; sum+=v; }
+  return arr.map(v=>sum>0?v/sum:0);
+}
+
+async function fetchHourlyShape(lat, lon) {
+  const key=lat.toFixed(2)+','+lon.toFixed(2);
+  if (hourlyShapeCache[key]) return hourlyShapeCache[key];
+  const years=[2025,2024,2023];
+  for (const y of years) {
+    try {
+      const url=`https://power.larc.nasa.gov/api/temporal/hourly/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude=${lon}&latitude=${lat}&start=${y}0101&end=${y}1231&format=JSON&time-standard=LST`;
+      const res=await fetch(url); if (!res.ok) continue;
+      const data=await res.json();
+      const obj=data&&data.properties&&data.properties.parameter&&data.properties.parameter.ALLSKY_SFC_SW_DWN;
+      if (!obj) continue;
+      const sum=new Array(24).fill(0), cnt=new Array(24).fill(0);
+      for (const k in obj) { const v=obj[k]; if(v===null||v<=-900) continue; const hh=parseInt(k.slice(-2),10); if(hh>=0&&hh<24){sum[hh]+=v;cnt[hh]++;} }
+      const avg=sum.map((s,i)=>cnt[i]>0?s/cnt[i]:0);
+      const tot=avg.reduce((a,b)=>a+b,0); if(tot<=0) continue;
+      const shape=avg.map(v=>v/tot);
+      hourlyShapeCache[key]=shape; return shape;
+    } catch(e) {}
+  }
+  return null;
+}
+
+function dispatchBattery(pv, load, capNameplate, dod, etaRT) {
+  const ceil=capNameplate, floor=capNameplate*(1-dod);
+  const etaC=Math.sqrt(etaRT), etaD=Math.sqrt(etaRT);
+  let soc=floor+capNameplate*dod*0.5;
+  let socArr=[],batP=[],grid=[],curt=[];
+  for (let iter=0;iter<6;iter++) {
+    socArr=[];batP=[];grid=[];curt=[];
+    for (let h=0;h<24;h++) {
+      const net=pv[h]-load[h]; let bp=0,gi=0,cu=0;
+      if (net>=0) {
+        const room=ceil-soc, stored=Math.min(net*etaC,room);
+        soc+=stored; cu=net-stored/etaC; bp=-(stored/etaC);
+      } else {
+        const need=-net, avail=soc-floor, drawn=Math.min(need/etaD,avail);
+        soc-=drawn; gi=need-drawn*etaD; bp=drawn*etaD;
+      }
+      socArr.push(soc);batP.push(bp);grid.push(gi);curt.push(cu);
+    }
+  }
+  return {soc:socArr,batP,grid,curt,ceil};
+}
+
+function renderSimAdvice(m) {
+  const curtPct=m.pvTot>0?m.curtTot/m.pvTot*100:0;
+  const gridPct=m.loadTot>0?m.gridTot/m.loadTot*100:0;
+  const directPct=m.directRatio!=null?m.directRatio*100:0;
+  const tips=[];
+  if (directPct>=55) tips.push(`白天负荷占比高，光伏<b>直供率达 ${directPct.toFixed(0)}%</b>：用电与发电时段高度重合，储能只需覆盖少量缺口，电池已相应<b>配小</b>——这正是办公楼/工业日间负荷的成本优势。`);
+  if (m.gridTot>0.05) tips.push(`夜间/弱光时段存在 <b>${m.gridTot.toFixed(1)} kWh（占负载 ${gridPct.toFixed(0)}%）</b> 缺口：离网项目说明电池或组件偏小，可向客户提一档更大储能；并网项目由市电补足，可作为"自发自用+削峰"卖点。`);
+  if (curtPct>15) tips.push(`白天弃光 <b>${m.curtTot.toFixed(1)} kWh（占发电 ${curtPct.toFixed(0)}%）</b>：可向客户推荐增配电池提升自用率；或把可调负载（水泵/充电/制冷蓄冷）移到正午消纳。`);
+  if (curtPct<=15&&m.gridTot<=0.05) tips.push(`光伏-储能-负载三者匹配良好（自用率 ${m.selfCons.toFixed(0)}%、自给率 ${m.selfSuff.toFixed(0)}%），无明显弃光与缺口，是向客户证明"配置不浪费、不缺电"的有力图表。`);
+  tips.push(`按客户真实作息微调各设备"起始时段"后再出图，曲线即客户专属——比单一报价数字更有说服力，建议随技术方案一并发送。`);
+  document.getElementById('simAdvice').innerHTML=
+    `<div class="adv-title"><i class="ti ti-bulb"></i>商务建议（B2B）</div>`+tips.map(t=>`• ${t}`).join('<br>');
+}
+
+function renderSimChart(pv, load, batP, socPct, grid) {
+  const ctx=document.getElementById('simChart').getContext('2d');
+  if (simChart) simChart.destroy();
+  const labels=Array.from({length:24},(_,h)=>(h<10?'0'+h:h)+':00');
+  const hasGrid=grid.some(v=>v>0.05);
+  const grad=(c0,c1)=>(context)=>{
+    const {ctx,chartArea}=context.chart; if(!chartArea) return c0;
+    const g=ctx.createLinearGradient(0,chartArea.top,0,chartArea.bottom);
+    g.addColorStop(0,c0);g.addColorStop(1,c1);return g;
+  };
+  const nightShade={id:'nightShade',beforeDraw(chart){
+    const x=chart.scales.x; if(!x)return;
+    const {ctx,chartArea:{top,bottom}}=chart;
+    const x6=x.getPixelForValue(6),x18=x.getPixelForValue(18);
+    ctx.save();ctx.fillStyle='rgba(28,40,64,0.05)';
+    ctx.fillRect(x.left,top,x6-x.left,bottom-top);
+    ctx.fillRect(x18,top,x.right-x18,bottom-top);ctx.restore();
+  }};
+  const datasets=[
+    {label:'光伏发电',data:pv,borderColor:'#F4A52A',backgroundColor:grad('rgba(244,165,42,0.40)','rgba(244,165,42,0.02)'),fill:true,tension:0.4,pointRadius:0,borderWidth:2.5,yAxisID:'y',order:3},
+    {label:'负载用电',data:load,borderColor:'#274B8E',backgroundColor:'transparent',fill:false,tension:0.3,pointRadius:0,borderWidth:2.5,yAxisID:'y',order:1},
+    {label:'电池电量',data:socPct,borderColor:'#1FA978',backgroundColor:grad('rgba(31,169,120,0.22)','rgba(31,169,120,0.02)'),fill:true,tension:0.35,pointRadius:0,borderWidth:2,borderDash:[6,3],yAxisID:'y1',order:4}
+  ];
+  if (hasGrid) datasets.push({label:'电网补充',data:grid,borderColor:'#E0625E',backgroundColor:'rgba(224,98,94,0.28)',fill:true,tension:0.25,pointRadius:0,borderWidth:1.5,yAxisID:'y',order:2});
+  simChart=new Chart(ctx,{
+    type:'line',data:{labels,datasets},plugins:[nightShade],
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      layout:{padding:{top:6}},
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(22,32,27,0.92)',padding:10,cornerRadius:8,titleFont:{size:12},bodyFont:{size:12},boxPadding:4,usePointStyle:true,
+        callbacks:{label:c=>c.dataset.yAxisID==='y1'?`  ${c.dataset.label}: ${c.parsed.y.toFixed(0)}%`:`  ${c.dataset.label}: ${c.parsed.y.toFixed(2)} kW`}}},
+      scales:{
+        x:{grid:{display:false},border:{color:'#dfe5e1'},ticks:{font:{size:10},color:'#8a948e',maxRotation:0,autoSkip:true,maxTicksLimit:9},title:{display:true,text:'时间',font:{size:11},color:'#8a948e'}},
+        y:{position:'left',beginAtZero:true,border:{display:false},title:{display:true,text:'功率 (kW)',font:{size:11},color:'#8a948e'},grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{size:10},color:'#8a948e'}},
+        y1:{position:'right',min:0,max:100,border:{display:false},title:{display:true,text:'电池电量 (%)',font:{size:11},color:'#1FA978'},grid:{drawOnChartArea:false},ticks:{font:{size:10},color:'#1FA978',callback:v=>v+'%'}}
+      }
+    }
+  });
 }
 
 initCats();
