@@ -911,8 +911,15 @@ async function exportReport(){
     ];
 
     // ========= Ch2: Load Analysis =========
+    // look up nameEn from APPLIANCES in case it wasn't stored on old load entries
+    const getDevName=(l)=>{
+      if(!isEn)return l.name;
+      if(l.nameEn)return l.nameEn;
+      for(const cat of Object.values(APPLIANCES)){const ap=cat.find(a=>a.name===l.name);if(ap?.nameEn)return ap.nameEn;}
+      return l.name;
+    };
     const loadRows=loads.map((l,i)=>new TableRow({children:[
-      dCell(i+1),dCell(isEn?(l.nameEn||l.name):l.name),dCell(l.power),dCell(l.qty||1),
+      dCell(i+1),dCell(getDevName(l)),dCell(l.power),dCell(l.qty||1),
       dCell(l.start||0),dCell(l.hours),
       dCell(((l.power*(l.qty||1)*l.hours)/1000).toFixed(2))
     ]}));
