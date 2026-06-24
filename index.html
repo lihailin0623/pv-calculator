@@ -943,11 +943,11 @@ async function exportReport(){
       [isEn?'Inverter Configuration':'逆变器配置',c.invText],
     ];
     const pvDesc=isEn
-      ?'This project uses high-efficiency monocrystalline PERC/TOPCon modules from Tier-1 manufacturers including Trina Solar, Jinko Solar, JA Solar, and LONGi, all ranked in the Bloomberg NEF Tier-1 list and certified to IEC 61215 / IEC 61730 with 25–30 year linear power warranties. Modules are arranged in an even-number string layout to optimise MPPT symmetry and simplify maintenance.'
-      :'本项目采用天合（Trina）、晶科（Jinko）、晶澳（JA Solar）、隆基（LONGi）等 Bloomberg NEF 第一梯队品牌高效单晶 PERC/TOPCon 组件，通过 IEC 61215 / IEC 61730 认证，线性功率质保 25～30 年，组件以偶数串布局安装，确保 MPPT 跟踪对称性。';
+      ?'This project uses high-efficiency monocrystalline TOPCon modules from Tier-1 manufacturers including Trina Solar, Jinko Solar, JA Solar, and LONGi, all certified to IEC 61215 / IEC 61730 with 25–30 year linear power warranties. Modules are arranged in an even-number string layout to optimise MPPT symmetry and simplify maintenance.'
+      :'本项目采用天合（Trina）、晶科（Jinko）、晶澳（JA Solar）、隆基（LONGi）等一线品牌高效单晶 TOPCon 组件，通过 IEC 61215 / IEC 61730 认证，线性功率质保 25～30 年，组件以偶数串布局安装，确保 MPPT 跟踪对称性。';
     const batDesc=isEn
-      ?'MIDFINE Energy LFP battery systems exclusively use Grade A+ cells from Tier-1 manufacturers (CATL, BYD, EVE Energy, REPT, CALB), with full OCV and internal-resistance matching reports per batch, ensuring high safety and exceptional cycle life. The proprietary BMS features dual-algorithm SOC calibration and deep protocol compatibility with leading inverter brands including Deye, Solis, Growatt, and GoodWe, enabling seamless plug-and-play integration on site.'
-      :'MIDFINE Energy 磷酸铁锂储能系统全部采用宁德时代（CATL）、比亚迪（BYD）、亿纬锂能（EVE Energy）、瑞浦兰钧（REPT）、中创新航（CALB）等一线厂商正 A 级电芯，每批随箱附 OCV 与内阻一致性报告，安全性高、循环寿命长。自研 BMS 支持双算法 SOC 自动校准，并与德业（Deye）、锦浪（Solis）、古瑞瓦特（Growatt）、固德威（GoodWe）等主流逆变器深度通讯适配，现场即插即用。';
+      ?'MIDFINE Energy LFP battery systems exclusively use Grade A+ cells from Tier-1 manufacturers (CATL, BYD, EVE Energy, REPT, CALB), ensuring high safety and exceptional cycle life. The BMS features deep protocol compatibility with leading inverter brands including Deye, Solis, Growatt, and GoodWe, enabling seamless plug-and-play integration on site.'
+      :'MIDFINE Energy 磷酸铁锂储能系统全部采用宁德时代（CATL）、比亚迪（BYD）、亿纬锂能（EVE Energy）、瑞浦兰钧（REPT）、中创新航（CALB）等一线厂商正 A 级电芯，安全性高、循环寿命长。BMS 与德业（Deye）、锦浪（Solis）、古瑞瓦特（Growatt）、固德威（GoodWe）等主流逆变器深度通讯适配，现场即插即用。';
     const invDesc=isEn
       ?'Inverters are sourced from internationally recognised Tier-1 manufacturers including Deye, Solis, Growatt, and GoodWe, all carrying CE and IEC 62109 certifications. Selection is based on the site grid type (on-grid / hybrid / off-grid), load profile, and battery communication protocol to ensure full compatibility and peak efficiency.'
       :'逆变器采用德业（Deye）、锦浪（Solis）、古瑞瓦特（Growatt）、固德威（GoodWe）等国际一线品牌，通过 CE 及 IEC 62109 认证，依据项目并网类型（并网/混合/离网）、负载特性与电池通讯协议综合选型，确保全工况兼容与最优转换效率。';
@@ -995,13 +995,6 @@ async function exportReport(){
         dCell(''),dCell(''),dCell(''),dCell('',{}),dCell('')
       ]})
     ];
-    const signRows=[
-      new TableRow({children:[hCell(isEn?'Prepared by':'编制单位'),hCell(isEn?'Reviewed by':'审核'),hCell(isEn?'Customer Confirmation':'客户确认')]}),
-      emptyRow(3),
-      new TableRow({children:[dCell(isEn?'Signature: ___________':'签字：___________'),dCell(isEn?'Signature: ___________':'签字：___________'),dCell(isEn?'Signature: ___________':'签字：___________')]}),
-      new TableRow({children:[dCell(isEn?'Date: _______________':'日期：_______________'),dCell(isEn?'Date: _______________':'日期：_______________'),dCell(isEn?'Date: _______________':'日期：_______________')]}),
-      new TableRow({children:[dCell('MIDFINE Energy'),dCell(''),dCell(customer)]})
-    ];
     const ch4q=[
       H1(isEn?'4. Commercial Proposal':'四、商务报价'),
       new Table({width:TW,borders:BORDERS,rows:priceRows}),
@@ -1009,8 +1002,6 @@ async function exportReport(){
       P(isEn?'1. Prices above are in USD unless otherwise agreed.':'1. 报价币种以双方协议为准。'),
       P(isEn?'2. Validity of this quotation: 30 days from the date of issue.':'2. 本报价有效期自出具之日起 30 天。'),
       P(isEn?'3. The above system sizes are estimated values; final design subject to site survey.':'3. 以上配置为估算值，最终方案以现场勘察结果为准。'),
-      new Paragraph({spacing:{before:600,after:200},children:[new TextRun({text:isEn?'Signatures / Confirmation':'签字确认',bold:true,size:22,color:DARK})]}),
-      new Table({width:TW,borders:BORDERS,rows:signRows})
     ];
 
     const doc=new Document({
