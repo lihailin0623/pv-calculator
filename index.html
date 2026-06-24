@@ -553,7 +553,8 @@ async function calculate(opts){
   const BAT_EFF=0.95;
   const dailyKwh=getDailyKwh();
   const pvReq=dailyKwh/(psh*EFF);
-  const pvPanels=Math.ceil(pvReq/panelUnit);
+  let pvPanels=Math.ceil(pvReq/panelUnit);
+  if(pvPanels%2!==0)pvPanels++;
   const pvActual=pvPanels*panelUnit;
   const peakKw=loads.reduce((s,l)=>s+l.power*(l.qty||1),0)/1000;
   const invReq=peakKw/0.9;
@@ -835,13 +836,26 @@ async function exportReport(){
       [isEn?'Apparent Power Requirement':'需求视在功率',(c.peakKw/0.9).toFixed(1)+' kVA'],
       [isEn?'Inverter Configuration':'逆变器配置',c.invText],
     ];
+    const pvDesc=isEn
+      ?'This project uses high-efficiency monocrystalline PERC/TOPCon photovoltaic modules sourced from Tier-1 manufacturers — including brands such as LONGi, Jinko Solar, Trina Solar, and Canadian Solar — which are consistently ranked in the Bloomberg NEF Tier-1 PV Module Manufacturer list. All modules carry IEC 61215 / IEC 61730 certifications, with linear performance warranties of 25–30 years guaranteeing no less than 80% of rated output at end of life. Modules are arranged in an even-number string layout to optimise MPPT tracking symmetry and simplify O&M.'
+      :'本项目采用一线品牌高效单晶 PERC / TOPCon 光伏组件，合作品牌涵盖隆基、晶科、天合、加拿大太阳能等 Bloomberg NEF 第一梯队厂商。所有组件通过 IEC 61215 / IEC 61730 认证，线性功率质保 25～30 年，寿命末期不低于额定功率 80%。组件以偶数串布局安装，确保 MPPT 跟踪对称性并降低运维难度。';
+    const batDesc=isEn
+      ?'MIDFINE Energy LFP battery systems are built on the following key technical advantages:\n\n① Premium Cell Selection — Only Grade A+ cells from Tier-1 suppliers (CATL, BYD, EVE, REPT, CALB) are used. Every cell batch is accompanied by factory OCV consistency and internal resistance matching reports, ensuring inter-cell variance is minimised before pack assembly.\n\n② Advanced 5+5+6 Cell Layout — Our 16-cell modules adopt a 5+5+6 arrangement across three columns, creating natural airflow channels between cells. This improves thermal uniformity, reduces hot-spot risk, and achieves superior cycle life compared to conventional high-density configurations.\n\n③ Dual-Algorithm BMS with Auto-Calibration — The proprietary BMS combines Coulomb counting with open-circuit voltage correction, applying temperature and internal-resistance compensation in real time. SOC accuracy is maintained through periodic automatic calibration, eliminating the drift that causes "phantom charge" or premature low-battery cutoff.\n\n④ Master-Slave Parallel Architecture — For multi-pack systems, a dedicated Master-Slave protocol with self-learning balancing ensures current sharing accuracy and SOC synchronisation across all units, preventing the cascade tripping and capacity theft common in lesser systems.\n\n⑤ High-Grade Wiring & Thermal Sensing — All internal cabling uses high-temperature-rated AWG wiring (not standard BVR wire). Four independent temperature sensors per module continuously monitor cell-level temperatures. Steel band cell fixation with 1–2 mm inter-cell foam padding provides vibration resistance during transport and operation.\n\n⑥ Double Burn-In Testing — Every battery system undergoes two full charge-discharge cycles before shipment: the first at module stage to screen out high self-discharge and consistency outliers; the second at full PACK stage to validate BMS protection, power control, and communication stability under real operating conditions. Standby parasitic power is kept below 3 mA.'
+      :'MIDFINE Energy 磷酸铁锂储能系统具备以下核心技术优势：\n\n① 顶级电芯溯源 — 仅采用宁德时代、比亚迪、亿纬锂能、瑞浦兰钧、中创新航等一线厂商 A+ 级电芯，每批次随箱提供开路电压（OCV）一致性及内阻匹配出厂报告，从源头杜绝一致性差异。\n\n② 5+5+6 散热优化排布 — 16 芯模组采用三列 5+5+6 布局，电芯间留有通风间隙，散热路径顺畅，有效抑制热点产生，在高温环境下的循环寿命显著优于传统密排结构。\n\n③ 双算法 BMS 自动校准 — 自研 BMS 融合库仑计量与 OCV 双算法，实时进行温度补偿与内阻修正，SOC 定期自动校准，从根本上消除因累积漂移导致的"虚电"或提前断机问题。\n\n④ Master-Slave 并机架构 — 多包并机采用主从协议与自学习均流机制，精确同步各包 SOC 与电流分配，彻底解决并机后频繁掉线、SOC 互相拉扯的顽疾。\n\n⑤ 高规格线材与四点测温 — 内部线缆全部采用高温 AWG 美标线（非普通 BVR 线），每模组配备 4 路独立温度探头实时监控电芯健康。电芯采用钢带固定，电芯间填充 1～2 mm 防震海绵，兼顾运输与运行振动防护。\n\n⑥ 双重出厂化成测试 — 所有电池系统出厂前经历两次完整充放电化成：第一次在模组阶段筛除高自放电与一致性异常电芯；第二次在整机 PACK 阶段按真实工况运行，全面验证 BMS 保护逻辑、功率控制与通讯稳定性。待机寄生功率严格控制在 3 mA 以下。';
+    const invDesc=isEn
+      ?'Inverters are sourced from internationally recognised Tier-1 manufacturers including Growatt, Sungrow, Huawei FusionSolar, Victron Energy, and SMA Solar. All units carry CE, IEC 62109, and relevant grid-code certifications. Models are selected based on the site\'s grid type (on-grid / hybrid / off-grid), load characteristics, and battery communication protocol to ensure full compatibility and optimal efficiency across the operating range.'
+      :'逆变器采用古瑞瓦特（Growatt）、阳光电源（Sungrow）、华为 FusionSolar、Victron Energy、SMA 等国际一线品牌，通过 CE、IEC 62109 及目标市场并网认证。依据项目并网类型（并网 / 混合 / 离网）、负载特性与电池通讯协议综合选型，确保全工况兼容与最优转换效率。';
+
     const ch3=[
       H1(isEn?'3. System Design':'三、系统设计'),
       H2(isEn?'3.1 PV Modules':'3.1 光伏组件'),
+      P(pvDesc,{after:180}),
       new Table({width:TW,borders:BORDERS,rows:[new TableRow({children:[hCell(isEn?'Parameter':'参数'),hCell(isEn?'Value':'数值')]}), ...pvDesign.map(([k,v])=>new TableRow({children:[dCell(k),dCell(v)]}))]}),
       H2(isEn?'3.2 Battery Storage':'3.2 储能电池'),
+      ...batDesc.split('\n\n').map((s,i)=>P(s.replace(/\n/g,' '),{after:i===0?160:120})),
       new Table({width:TW,borders:BORDERS,rows:[new TableRow({children:[hCell(isEn?'Parameter':'参数'),hCell(isEn?'Value':'数值')]}), ...batDesign.map(([k,v])=>new TableRow({children:[dCell(k),dCell(v)]}))]}),
       H2(isEn?'3.3 Inverter':'3.3 逆变器'),
+      P(invDesc,{after:180}),
       new Table({width:TW,borders:BORDERS,rows:[new TableRow({children:[hCell(isEn?'Parameter':'参数'),hCell(isEn?'Value':'数值')]}), ...invDesign.map(([k,v])=>new TableRow({children:[dCell(k),dCell(v)]}))]}),
       PB()
     ];
