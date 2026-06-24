@@ -177,15 +177,9 @@ select:focus,input[type=text]:focus{outline:none;border-color:#1D9E75}
 
     <div class="card">
       <div class="card-title"><i class="ti ti-building-community"></i><span data-k="projectInfo">项目信息</span></div>
-      <div class="param-grid">
-        <div class="param-item">
-          <label data-k="customerName">客户名称</label>
-          <input type="text" id="customerName" placeholder="公司 / 客户名称">
-        </div>
-        <div class="param-item">
-          <label data-k="projectLoc">项目地点</label>
-          <input type="text" id="projectLoc" placeholder="查询 NASA 后自动填入">
-        </div>
+      <div class="param-item">
+        <label data-k="customerName">客户名称</label>
+        <input type="text" id="customerName" placeholder="公司 / 客户名称">
       </div>
     </div>
 
@@ -386,7 +380,6 @@ function setLang(l){
   document.getElementById('hTitle').textContent=t('pageTitle');
   document.getElementById('hSub').textContent=t('pageSub');
   document.getElementById('customerName').placeholder=t('customerNamePh');
-  document.getElementById('projectLoc').placeholder=t('projectLocPh');
   document.getElementById('locInput').placeholder=t('nasaPlaceholder');
   document.querySelectorAll('[data-k]').forEach(el=>{
     const v=TXT[l][el.getAttribute('data-k')]; if(v) el.textContent=v;
@@ -493,7 +486,6 @@ async function fetchNASA(){
     renderMonthlyBars(vals);
     document.getElementById('pshResult').style.display='';
     document.getElementById('nasaPshRow').innerHTML='<span style="color:#0F6E56;font-weight:600">'+nasaPsh+' h/day</span> <span class="nasa-tag">NASA POWER · '+q+'</span>';
-    document.getElementById('projectLoc').value=q;
     setStatus('','');
   }catch(e){setStatus(lang==='zh'?'查询失败，请检查网络':'Query failed, check network','error');console.error(e);}
   btn.disabled=false;
@@ -750,7 +742,7 @@ async function exportReport(){
   try{
     const isEn=lang==='en';
     const customer=document.getElementById('customerName').value.trim()||(isEn?'Customer':'客户');
-    const location=document.getElementById('projectLoc').value.trim()||nasaLocationName||(isEn?'Project Site':'项目地点');
+    const location=nasaLocationName||(isEn?'Project Site':'项目地点');
     const dateStr=new Date().toLocaleDateString(isEn?'en-US':'zh-CN',{year:'numeric',month:'long',day:'numeric'});
     const chartCanvas=document.getElementById('simChart');
     const chartBuf=b64UrlToBuffer(chartCanvas.toDataURL('image/png'));
