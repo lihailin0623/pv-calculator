@@ -221,19 +221,19 @@ select:focus,input[type=text]:focus{outline:none;border-color:#1D9E75}
 
       <div class="param-grid">
         <div class="param-item">
-          <label data-k="autonomy">自持天数</label>
+          <label data-k="autonomy">自给天数</label>
           <select id="autonomy">
-            <option value="1" data-k-opt="auto1">1天（并网+储能）</option>
+            <option value="1" selected data-k-opt="auto1">1天（并网+储能）</option>
             <option value="2" data-k-opt="auto2">2天（住宅离网）</option>
-            <option value="3" selected data-k-opt="auto3">3天（商业离网）</option>
+            <option value="3" data-k-opt="auto3">3天（商业离网）</option>
             <option value="5" data-k-opt="auto5">5天（偏远地区）</option>
           </select>
         </div>
         <div class="param-item">
           <label data-k="batLabel">电池类型（磷酸铁锂）</label>
           <select id="batType">
-            <option value="0.80">LFP DoD 80%</option>
-            <option value="0.85" selected>LFP DoD 85%</option>
+            <option value="0.80" selected>LFP DoD 80%</option>
+            <option value="0.85">LFP DoD 85%</option>
             <option value="0.90">LFP DoD 90%</option>
           </select>
         </div>
@@ -251,7 +251,7 @@ select:focus,input[type=text]:focus{outline:none;border-color:#1D9E75}
           <label data-k="sysEff">系统效率</label>
           <select id="sysEff">
             <option value="0.75">75%</option><option value="0.80">80%</option>
-            <option value="0.82" selected>82%（推荐）</option><option value="0.85">85%</option>
+            <option value="0.82">82%</option><option value="0.85" selected>85%（推荐）</option>
           </select>
         </div>
       </div>
@@ -319,7 +319,7 @@ zh:{
   nasaPlaceholder:'输入地名，如：三亚、拉萨…', search:'查询',
   annualPsh:'年均峰值日照', pshSrc:'峰值日照时数来源', manual:'手动选择城市',
   nasaHint:'请先查询地点获取 NASA 日照数据',
-  autonomy:'自持天数', batLabel:'电池类型（磷酸铁锂）', panelLabel:'组件规格', sysEff:'系统效率',
+  autonomy:'自给天数', batLabel:'电池类型（磷酸铁锂）', panelLabel:'组件规格', sysEff:'系统效率',
   auto1:'1天（并网+储能）', auto2:'2天（住宅离网）', auto3:'3天（商业离网）', auto5:'5天（偏远地区）',
   calcBtn:'计算配置方案', result:'配置结果', resultHint:'填写负载后点击计算',
   simTitle:'光伏储能系统 · 全天发用电模拟', simHint:'先在右侧完成配置计算，系统将生成全天运行曲线',
@@ -736,7 +736,7 @@ async function exportReport(){
     const{Document,Paragraph,TextRun,Table,TableRow,TableCell,ImageRun,
       HeadingLevel,AlignmentType,WidthType,Packer,PageBreak,BorderStyle}=window.docx;
 
-    const TW={size:100,type:WidthType.PERCENTAGE};
+    const TW={size:5000,type:WidthType.PERCENTAGE};
     const BORDER={style:BorderStyle.SINGLE,size:4,color:'DDDDDD'};
     const BORDERS={top:BORDER,bottom:BORDER,left:BORDER,right:BORDER,insideHorizontal:BORDER,insideVertical:BORDER};
     const GREEN='1D9E75',BLUE='185FA5',DARK='1A1A1A',GRAY='888888';
@@ -763,7 +763,7 @@ async function exportReport(){
       new Paragraph({children:[new ImageRun({data:logoBuf,transformation:{width:220,height:54}})],alignment:AlignmentType.CENTER,spacing:{before:1800,after:500}}),
       new Paragraph({children:[new TextRun({text:isEn?'PV & Energy Storage System':'光伏储能系统',size:60,bold:true,color:GREEN})],alignment:AlignmentType.CENTER,spacing:{after:160}}),
       new Paragraph({children:[new TextRun({text:isEn?'Technical Proposal':'技术方案书',size:40,color:'444444'})],alignment:AlignmentType.CENTER,spacing:{after:1000}}),
-      new Table({width:{size:55,type:WidthType.PERCENTAGE},borders:BORDERS,rows:coverRows.map(([k,v])=>new TableRow({children:[dCell(k,{bold:true,color:'555555'}),dCell(v)]})),alignment:AlignmentType.CENTER}),
+      new Table({width:{size:2750,type:WidthType.PERCENTAGE},borders:BORDERS,rows:coverRows.map(([k,v])=>new TableRow({children:[dCell(k,{bold:true,color:'555555'}),dCell(v)]})),alignment:AlignmentType.CENTER}),
       PB()
     ];
 
@@ -824,7 +824,7 @@ async function exportReport(){
     const batDesign=[
       [isEn?'PV Direct Supply (daytime)':'光伏白天直供量',c.pvDirectKwh.toFixed(2)+' kWh/day ('+( c.dailyKwh>0?(c.pvDirectKwh/c.dailyKwh*100).toFixed(0):0)+'%)'],
       [isEn?'Deficit to Be Covered':'待电池覆盖缺口',c.deficitKwh.toFixed(2)+' kWh/day'],
-      [isEn?'Battery Autonomy':'自持天数',c.autonomy+(isEn?' day(s)':' 天')],
+      [isEn?'Battery Autonomy':'自给天数',c.autonomy+(isEn?' day(s)':' 天')],
       [isEn?'Total Energy Requirement':'总储能需求',c.batEnergyReq.toFixed(2)+' kWh'],
       [isEn?'Depth of Discharge (DoD)':'放电深度 DoD',(c.dod*100).toFixed(0)+'%'],
       [isEn?'Round-Trip Efficiency':'充放效率 η','95%'],
