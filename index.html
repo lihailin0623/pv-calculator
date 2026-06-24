@@ -418,7 +418,10 @@ let lang = 'zh';
 function t(k){ return (TXT[lang]&&TXT[lang][k])||TXT.en[k]||k; }
 function setLang(l){
   lang=l;
-  ['zh','en','fr','es','ru'].forEach(x=>document.getElementById('btn'+x.charAt(0).toUpperCase()+x.slice(1))?.classList.toggle('active',x===l));
+  ['zh','en','fr','es','ru'].forEach(x=>{
+    const btn=document.getElementById('btn'+x.charAt(0).toUpperCase()+x.slice(1));
+    if(btn) btn.classList.toggle('active',x===l);
+  });
   document.documentElement.lang=l==='zh'?'zh-CN':l;
   document.getElementById('pageTitle').textContent=t('pageTitle');
   document.getElementById('hTitle').textContent=t('pageTitle');
@@ -426,8 +429,16 @@ function setLang(l){
   document.getElementById('customerName').placeholder=t('customerNamePh');
   document.getElementById('locInput').placeholder=t('nasaPlaceholder');
   document.querySelectorAll('[data-k]').forEach(el=>{
-    const v=TXT[l][el.getAttribute('data-k')]; if(v) el.textContent=v;
+    const v=t(el.getAttribute('data-k')); if(v) el.textContent=v;
   });
+  // update select option labels
+  document.querySelectorAll('[data-k-opt]').forEach(el=>{
+    const v=t(el.getAttribute('data-k-opt')); if(v) el.textContent=v;
+  });
+  // re-render calc button text
+  const cb=document.getElementById('calcBtn'); if(cb) cb.textContent=t('calcBtn');
+  // re-render chart if simulation already done
+  if(lastCalc&&lastSim) renderSimulation();
 }
 
 const APPLIANCES = {
