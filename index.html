@@ -151,6 +151,9 @@ select:focus,input[type=text]:focus{outline:none;border-color:#1D9E75}
     <div class="lang-switch">
       <button class="lang-btn active" id="btnZh" onclick="setLang('zh')">中文</button>
       <button class="lang-btn" id="btnEn" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" id="btnFr" onclick="setLang('fr')">FR</button>
+      <button class="lang-btn" id="btnEs" onclick="setLang('es')">ES</button>
+      <button class="lang-btn" id="btnRu" onclick="setLang('ru')">RU</button>
     </div>
     <div style="font-size:12px;color:#bbb">MIDFINE Energy</div>
   </div>
@@ -353,13 +356,70 @@ en:{
   docxNotLoaded:'Word export library not loaded. Please check network and refresh.'
 }};
 
+TXT.fr={
+  pageTitle:'Calculateur PV & Stockage',pageSub:'v3.1 · Outil Commercial',
+  projectInfo:'Infos Projet',customerName:'Nom du Client',projectLoc:'Lieu du Projet',
+  customerNamePh:'Société / Nom du client',projectLocPh:'Rempli après requête NASA',
+  selectLoad:'Sélectionner les Appareils',loadList:'Liste de Charges',loadHint:'Cliquer sur les cartes pour ajouter des appareils',
+  devName:'Appareil',power:'Puissance(W)',qty:'Qté',startH:'Début(h)',durH:'Durée(h)',
+  totalDaily:'Total journalier : ',day:'jour',day2:'jour',
+  sysParams:'Paramètres Système',nasaTitle:'Données NASA POWER',
+  nasaPlaceholder:'Entrer un lieu…',search:'Rechercher',
+  annualPsh:'PSH Annuel Moy.',pshSrc:'Source PSH',manual:'Ville Manuelle',nasaHint:'Rechercher un lieu pour obtenir les données NASA',
+  autonomy:'Jours d\'Autonomie',batLabel:'Type Batterie (LFP)',panelLabel:'Spéc. Module',sysEff:'Efficacité Système',
+  auto1:'1 jour (Réseau + Stockage)',auto2:'2 jours (Résidentiel Isolé)',auto3:'3 jours (Commercial Isolé)',auto5:'5 jours (Zone Éloignée)',
+  calcBtn:'Calculer le Système',result:'Résultats',resultHint:'Ajouter des charges puis calculer',
+  simTitle:'Simulation Journalière PV & Stockage',simHint:'Compléter le calcul pour la simulation',
+  exportBtn:'Exporter Proposition Word',exportNote:'Charges, conception, simulation et devis',
+  internalRef:'Notes Commerciales Internes',unknownCustomer:'Client',unknownLoc:'Site Projet',
+  noCalcAlert:'Veuillez d\'abord effectuer le calcul',exportingMsg:'Génération du rapport…',
+  exportError:'Échec de l\'exportation',docxNotLoaded:'Bibliothèque Word non chargée. Vérifiez la connexion et actualisez.'
+};
+TXT.es={
+  pageTitle:'Calculadora FV & Almacenamiento',pageSub:'v3.1 · Herramienta Comercial',
+  projectInfo:'Información del Proyecto',customerName:'Nombre del Cliente',projectLoc:'Ubicación del Proyecto',
+  customerNamePh:'Empresa / Nombre del cliente',projectLocPh:'Se rellena tras consulta NASA',
+  selectLoad:'Seleccionar Equipos',loadList:'Lista de Cargas',loadHint:'Haga clic en las tarjetas para agregar equipos',
+  devName:'Equipo',power:'Potencia(W)',qty:'Cant.',startH:'Inicio(h)',durH:'Duración(h)',
+  totalDaily:'Total diario: ',day:'día',day2:'día',
+  sysParams:'Parámetros del Sistema',nasaTitle:'Datos NASA POWER',
+  nasaPlaceholder:'Ingresar ubicación…',search:'Buscar',
+  annualPsh:'PSH Anual Prom.',pshSrc:'Fuente PSH',manual:'Ciudad Manual',nasaHint:'Busque primero una ubicación',
+  autonomy:'Días de Autonomía',batLabel:'Tipo Batería (LFP)',panelLabel:'Especif. Módulo',sysEff:'Eficiencia del Sistema',
+  auto1:'1 día (Red + Almacenamiento)',auto2:'2 días (Residencial Aislado)',auto3:'3 días (Comercial Aislado)',auto5:'5 días (Zona Remota)',
+  calcBtn:'Calcular Sistema',result:'Resultados',resultHint:'Agregar cargas y calcular',
+  simTitle:'Simulación Diaria FV & Almacenamiento',simHint:'Complete el cálculo para la simulación',
+  exportBtn:'Exportar Propuesta Word',exportNote:'Cargas, diseño, simulación y cotización',
+  internalRef:'Notas Comerciales Internas',unknownCustomer:'Cliente',unknownLoc:'Sitio del Proyecto',
+  noCalcAlert:'Por favor complete el cálculo primero',exportingMsg:'Generando informe…',
+  exportError:'Error al exportar',docxNotLoaded:'Biblioteca Word no cargada. Verifique la conexión y actualice.'
+};
+TXT.ru={
+  pageTitle:'Калькулятор СЭС и Накопителей',pageSub:'v3.1 · Коммерческий Инструмент',
+  projectInfo:'Информация о Проекте',customerName:'Название Клиента',projectLoc:'Местоположение',
+  customerNamePh:'Компания / Имя клиента',projectLocPh:'Заполняется после запроса NASA',
+  selectLoad:'Выбор Нагрузки',loadList:'Список Нагрузок',loadHint:'Нажмите на карточки для добавления оборудования',
+  devName:'Оборудование',power:'Мощность(Вт)',qty:'Кол.',startH:'Начало(ч)',durH:'Длит.(ч)',
+  totalDaily:'Итого в день: ',day:'день',day2:'день',
+  sysParams:'Параметры Системы',nasaTitle:'Данные NASA POWER',
+  nasaPlaceholder:'Введите местоположение…',search:'Поиск',
+  annualPsh:'Среднегод. ПСЧ',pshSrc:'Источник ПСЧ',manual:'Ручной Выбор',nasaHint:'Сначала выполните поиск местоположения',
+  autonomy:'Дни Автономии',batLabel:'Тип Аккумулятора (LFP)',panelLabel:'Спецификация Модуля',sysEff:'КПД Системы',
+  auto1:'1 день (Сеть + Накопитель)',auto2:'2 дня (Жилой, изолир.)',auto3:'3 дня (Коммерч., изолир.)',auto5:'5 дней (Удалённый р-н)',
+  calcBtn:'Рассчитать Систему',result:'Результаты',resultHint:'Добавьте нагрузки и нажмите Рассчитать',
+  simTitle:'Суточное Моделирование СЭС',simHint:'Завершите расчёт для моделирования',
+  exportBtn:'Экспорт Предложения Word',exportNote:'Нагрузки, проект, моделирование и КП',
+  internalRef:'Внутренние Заметки',unknownCustomer:'Клиент',unknownLoc:'Площадка Проекта',
+  noCalcAlert:'Сначала выполните расчёт',exportingMsg:'Генерация отчёта…',
+  exportError:'Ошибка экспорта',docxNotLoaded:'Библиотека Word не загружена. Проверьте соединение и обновите страницу.'
+};
+
 let lang = 'zh';
-function t(k){ return TXT[lang][k]||k; }
+function t(k){ return (TXT[lang]&&TXT[lang][k])||TXT.en[k]||k; }
 function setLang(l){
   lang=l;
-  document.getElementById('btnZh').classList.toggle('active',l==='zh');
-  document.getElementById('btnEn').classList.toggle('active',l==='en');
-  document.documentElement.lang=l==='zh'?'zh-CN':'en';
+  ['zh','en','fr','es','ru'].forEach(x=>document.getElementById('btn'+x.charAt(0).toUpperCase()+x.slice(1))?.classList.toggle('active',x===l));
+  document.documentElement.lang=l==='zh'?'zh-CN':l;
   document.getElementById('pageTitle').textContent=t('pageTitle');
   document.getElementById('hTitle').textContent=t('pageTitle');
   document.getElementById('hSub').textContent=t('pageSub');
@@ -431,9 +491,45 @@ const APPLIANCES = {
     {name:"潜水泵0.75kW",power:750,hours:4,start:6,note:"灌溉"},
     {name:"水泵1.5kW",power:1500,hours:6,start:8,note:"供水"},
     {name:"水泵3kW",power:3000,hours:6,start:8,note:"大型供水"},
+    {name:"水泵5.5kW",power:5500,hours:8,start:7,note:"工业供水"},
+    {name:"水泵11kW",power:11000,hours:8,start:7,note:"大型泵站"},
     {name:"风机1.1kW",power:1100,hours:8,start:8,note:"通风"},
     {name:"风机5.5kW",power:5500,hours:8,start:8,note:"工业通风"},
     {name:"压缩机3kW",power:3000,hours:4,start:9,note:"气动"},
+    {name:"压缩机7.5kW",power:7500,hours:8,start:8,note:"工业气动"},
+  ],
+  "暖通/制冷":[
+    {name:"冷库压缩机5kW",power:5000,hours:20,start:0,note:"全天保温"},
+    {name:"冷库压缩机10kW",power:10000,hours:20,start:0,note:"大型冷库"},
+    {name:"工业冷却塔",power:3000,hours:12,start:8,note:"冷却水"},
+    {name:"地暖循环泵",power:200,hours:16,start:6,note:"供暖"},
+    {name:"热泵热水器2kW",power:2000,hours:3,start:7,note:"热水"},
+    {name:"工业烘干机",power:15000,hours:8,start:8,note:"烘干"},
+  ],
+  "农业/牧业":[
+    {name:"饮水泵0.5kW",power:500,hours:6,start:7,note:"牲畜饮水"},
+    {name:"灌溉泵1.1kW",power:1100,hours:6,start:6,note:"滴灌"},
+    {name:"养殖风机0.75kW",power:750,hours:16,start:6,note:"通风换气"},
+    {name:"保温灯250W",power:250,hours:16,start:18,note:"禽畜保温"},
+    {name:"饲料搅拌机2.2kW",power:2200,hours:2,start:7,note:"配料"},
+    {name:"挤奶机2.2kW",power:2200,hours:2,start:5,note:"早晚各1h"},
+    {name:"孵化器500W",power:500,hours:24,start:0,note:"恒温"},
+  ],
+  "通讯/基站":[
+    {name:"4G/5G基站",power:3000,hours:24,start:0,note:"全天"},
+    {name:"卫星通讯设备",power:500,hours:24,start:0,note:"全天"},
+    {name:"微波中继站",power:1000,hours:24,start:0,note:"全天"},
+    {name:"气象监测站",power:100,hours:24,start:0,note:"全天"},
+    {name:"UPS不间断电源",power:2000,hours:24,start:0,note:"备用"},
+    {name:"WiFi AP",power:20,hours:24,start:0,note:"覆盖单点"},
+  ],
+  "医疗/卫生":[
+    {name:"冰箱疫苗储存",power:100,hours:24,start:0,note:"2~8°C"},
+    {name:"制氧机5L",power:300,hours:24,start:0,note:"医疗氧气"},
+    {name:"血液透析机",power:1500,hours:4,start:8,note:"每日一次"},
+    {name:"X光机",power:5000,hours:1,start:9,note:"间歇使用"},
+    {name:"手术室灯",power:1000,hours:6,start:8,note:"无影灯"},
+    {name:"消毒柜500W",power:500,hours:1,start:12,note:"每日消毒"},
   ],
 };
 const CITIES={"北京":4.5,"上海":3.8,"广州":4.2,"深圳":4.1,"成都":3.2,"昆明":5.2,"拉萨":6.5,"哈尔滨":4.3,"西安":4.4,"武汉":3.9,"南京":4.0,"杭州":3.8,"郑州":4.3,"济南":4.5,"沈阳":4.2,"长沙":3.7,"合肥":4.0,"福州":4.1,"南昌":3.8,"贵阳":3.1,"南宁":4.0,"海口":4.5,"乌鲁木齐":5.3,"兰州":5.0,"银川":5.5,"西宁":5.2,"呼和浩特":4.8,"太原":4.6,"石家庄":4.4};
@@ -539,7 +635,13 @@ async function getPvShape(refetch){
 const INV_LADDER=[3,5,6,8,10,12,15,18,20,25,30,40,50,60,70,80,100,125];
 function chooseInverter(req){if(req<=0)return{unit:0,count:0,total:0,text:'—'};if(req<=125){const s=INV_LADDER.find(v=>v>=req);return{unit:s,count:1,total:s,text:s+' kVA'};}const count=Math.ceil(req/125);return{unit:125,count,total:125*count,text:count+' × 125 kVA = '+(125*count)+' kVA'};}
 const BAT_MODULES=[5,10,16];
-function chooseBattery(req){if(req<=0)return{unit:0,count:0,total:0,text:'No battery needed'};let best=null;BAT_MODULES.forEach(M=>{const N=Math.ceil(req/M),total=N*M;if(!best||total<best.total||(total===best.total&&N<best.count))best={unit:M,count:N,total};});best.text=best.count+' × '+best.unit+' kWh = '+best.total+' kWh';return best;}
+function chooseBattery(req){
+  if(req<=0)return{unit:0,count:0,total:0,text:'No battery needed'};
+  // Prefer 16 kWh modules for larger capacity needs
+  if(req>10){const N=Math.ceil(req/16),total=N*16;return{unit:16,count:N,total,text:N+' × 16 kWh = '+total+' kWh'};}
+  let best=null;BAT_MODULES.forEach(M=>{const N=Math.ceil(req/M),total=N*M;if(!best||total<best.total||(total===best.total&&N<best.count))best={unit:M,count:N,total};});
+  best.text=best.count+' × '+best.unit+' kWh = '+best.total+' kWh';return best;
+}
 
 async function calculate(opts){
   opts=opts||{};const silent=!!opts.silent;
@@ -589,7 +691,7 @@ async function calculate(opts){
     '<table class="detail-table"><tr><td>'+(isEn?'Peak load / Apparent power req':'峰值负载/视在功率需求')+'</td><td>'+peakKw.toFixed(2)+' kW / '+invReq.toFixed(1)+' kVA</td></tr><tr><td>'+(isEn?'Recommended inverter':'建议配置')+'</td><td style="color:#185FA5;font-weight:600">'+inv.text+'</td></tr></table>'+
     '<p class="note">'+nasaNote+(isEn?' Battery and inverter sized to standard modules; actual specs subject to vendor datasheet review.':' 电池与逆变器均按标准型号向上取整；以上为估算值，实际工程请结合厂商规格复核。')+'</p>';
 
-  lastCalc={psh,EFF,dod,autonomy,pvActual,pvPanels,panelUnit,batActual,batEnergyReq,batReq,invKva,invText:inv.text,batText:bat.text,dailyKwh,peakKw,pvDirectKwh,deficitKwh,pv,load,shapeSrc,BAT_RT:0.95};
+  lastCalc={psh,EFF,dod,autonomy,pvActual,pvPanels,panelUnit,bat,batActual,batEnergyReq,batReq,invKva,invText:inv.text,batText:bat.text,dailyKwh,peakKw,pvDirectKwh,deficitKwh,pv,load,shapeSrc,BAT_RT:0.95};
   renderSimulation();
 }
 
@@ -791,6 +893,10 @@ async function exportReport(){
         new TableRow({children:[hCell(isEn?'Parameter':'参数'),hCell(isEn?'Value':'数值')]}),
         ...metricsRows.map(([k,v])=>new TableRow({children:[dCell(k),dCell(v)]}))
       ]}),
+      new Paragraph({spacing:{before:320,after:60},children:[new TextRun({text:isEn?'24-Hour Power Flow Simulation (Typical Day)':'24小时电力流动模拟（典型日）',bold:true,size:22,color:BLUE})]}),
+      P(isEn?'The chart below simulates hourly power flow for a typical annual-average day based on NASA POWER irradiance data, showing how PV generation, battery storage, and load interact throughout the day.':'下图基于 NASA POWER 辐照数据模拟典型日逐时电力流动，直观呈现光伏发电、储能电池与负载的全天协同运行情况。',{after:120,size:20,color:GRAY}),
+      new Paragraph({children:[new ImageRun({data:chartBuf,transformation:{width:580,height:242}})],alignment:AlignmentType.CENTER,spacing:{before:80,after:100}}),
+      P(isEn?'Orange: PV generation  |  Dark blue: Load  |  Purple dashed: Battery power (−=charging)  |  Green dashed: Battery SOC % (right axis)':'橙色：光伏发电  |  深蓝：负载用电  |  紫色虚线：电池充放电功率（负=充电）  |  绿色虚线：电池电量%（右轴）',{italics:true,size:17,color:GRAY,after:0}),
       PB()
     ];
 
@@ -837,14 +943,14 @@ async function exportReport(){
       [isEn?'Inverter Configuration':'逆变器配置',c.invText],
     ];
     const pvDesc=isEn
-      ?'This project uses high-efficiency monocrystalline PERC/TOPCon photovoltaic modules sourced from Tier-1 manufacturers — including brands such as LONGi, Jinko Solar, Trina Solar, and Canadian Solar — which are consistently ranked in the Bloomberg NEF Tier-1 PV Module Manufacturer list. All modules carry IEC 61215 / IEC 61730 certifications, with linear performance warranties of 25–30 years guaranteeing no less than 80% of rated output at end of life. Modules are arranged in an even-number string layout to optimise MPPT tracking symmetry and simplify O&M.'
-      :'本项目采用一线品牌高效单晶 PERC / TOPCon 光伏组件，合作品牌涵盖隆基、晶科、天合、加拿大太阳能等 Bloomberg NEF 第一梯队厂商。所有组件通过 IEC 61215 / IEC 61730 认证，线性功率质保 25～30 年，寿命末期不低于额定功率 80%。组件以偶数串布局安装，确保 MPPT 跟踪对称性并降低运维难度。';
+      ?'This project uses high-efficiency monocrystalline PERC/TOPCon modules from Tier-1 manufacturers including Trina Solar, Jinko Solar, JA Solar, and LONGi, all ranked in the Bloomberg NEF Tier-1 list and certified to IEC 61215 / IEC 61730 with 25–30 year linear power warranties. Modules are arranged in an even-number string layout to optimise MPPT symmetry and simplify maintenance.'
+      :'本项目采用天合（Trina）、晶科（Jinko）、晶澳（JA Solar）、隆基（LONGi）等 Bloomberg NEF 第一梯队品牌高效单晶 PERC/TOPCon 组件，通过 IEC 61215 / IEC 61730 认证，线性功率质保 25～30 年，组件以偶数串布局安装，确保 MPPT 跟踪对称性。';
     const batDesc=isEn
-      ?'MIDFINE Energy LFP battery systems are built on the following key technical advantages:\n\n① Premium Cell Selection — Only Grade A+ cells from Tier-1 suppliers (CATL, BYD, EVE, REPT, CALB) are used. Every cell batch is accompanied by factory OCV consistency and internal resistance matching reports, ensuring inter-cell variance is minimised before pack assembly.\n\n② Advanced 5+5+6 Cell Layout — Our 16-cell modules adopt a 5+5+6 arrangement across three columns, creating natural airflow channels between cells. This improves thermal uniformity, reduces hot-spot risk, and achieves superior cycle life compared to conventional high-density configurations.\n\n③ Dual-Algorithm BMS with Auto-Calibration — The proprietary BMS combines Coulomb counting with open-circuit voltage correction, applying temperature and internal-resistance compensation in real time. SOC accuracy is maintained through periodic automatic calibration, eliminating the drift that causes "phantom charge" or premature low-battery cutoff.\n\n④ Master-Slave Parallel Architecture — For multi-pack systems, a dedicated Master-Slave protocol with self-learning balancing ensures current sharing accuracy and SOC synchronisation across all units, preventing the cascade tripping and capacity theft common in lesser systems.\n\n⑤ High-Grade Wiring & Thermal Sensing — All internal cabling uses high-temperature-rated AWG wiring (not standard BVR wire). Four independent temperature sensors per module continuously monitor cell-level temperatures. Steel band cell fixation with 1–2 mm inter-cell foam padding provides vibration resistance during transport and operation.\n\n⑥ Double Burn-In Testing — Every battery system undergoes two full charge-discharge cycles before shipment: the first at module stage to screen out high self-discharge and consistency outliers; the second at full PACK stage to validate BMS protection, power control, and communication stability under real operating conditions. Standby parasitic power is kept below 3 mA.'
-      :'MIDFINE Energy 磷酸铁锂储能系统具备以下核心技术优势：\n\n① 顶级电芯溯源 — 仅采用宁德时代、比亚迪、亿纬锂能、瑞浦兰钧、中创新航等一线厂商 A+ 级电芯，每批次随箱提供开路电压（OCV）一致性及内阻匹配出厂报告，从源头杜绝一致性差异。\n\n② 5+5+6 散热优化排布 — 16 芯模组采用三列 5+5+6 布局，电芯间留有通风间隙，散热路径顺畅，有效抑制热点产生，在高温环境下的循环寿命显著优于传统密排结构。\n\n③ 双算法 BMS 自动校准 — 自研 BMS 融合库仑计量与 OCV 双算法，实时进行温度补偿与内阻修正，SOC 定期自动校准，从根本上消除因累积漂移导致的"虚电"或提前断机问题。\n\n④ Master-Slave 并机架构 — 多包并机采用主从协议与自学习均流机制，精确同步各包 SOC 与电流分配，彻底解决并机后频繁掉线、SOC 互相拉扯的顽疾。\n\n⑤ 高规格线材与四点测温 — 内部线缆全部采用高温 AWG 美标线（非普通 BVR 线），每模组配备 4 路独立温度探头实时监控电芯健康。电芯采用钢带固定，电芯间填充 1～2 mm 防震海绵，兼顾运输与运行振动防护。\n\n⑥ 双重出厂化成测试 — 所有电池系统出厂前经历两次完整充放电化成：第一次在模组阶段筛除高自放电与一致性异常电芯；第二次在整机 PACK 阶段按真实工况运行，全面验证 BMS 保护逻辑、功率控制与通讯稳定性。待机寄生功率严格控制在 3 mA 以下。';
+      ?'MIDFINE Energy LFP battery systems exclusively use Grade A+ cells from Tier-1 manufacturers (CATL, BYD, EVE Energy, REPT, CALB), with full OCV and internal-resistance matching reports per batch, ensuring high safety and exceptional cycle life. The proprietary BMS features dual-algorithm SOC calibration and deep protocol compatibility with leading inverter brands including Deye, Solis, Growatt, and GoodWe, enabling seamless plug-and-play integration on site.'
+      :'MIDFINE Energy 磷酸铁锂储能系统全部采用宁德时代（CATL）、比亚迪（BYD）、亿纬锂能（EVE Energy）、瑞浦兰钧（REPT）、中创新航（CALB）等一线厂商正 A 级电芯，每批随箱附 OCV 与内阻一致性报告，安全性高、循环寿命长。自研 BMS 支持双算法 SOC 自动校准，并与德业（Deye）、锦浪（Solis）、古瑞瓦特（Growatt）、固德威（GoodWe）等主流逆变器深度通讯适配，现场即插即用。';
     const invDesc=isEn
-      ?'Inverters are sourced from internationally recognised Tier-1 manufacturers including Growatt, Sungrow, Huawei FusionSolar, Victron Energy, and SMA Solar. All units carry CE, IEC 62109, and relevant grid-code certifications. Models are selected based on the site\'s grid type (on-grid / hybrid / off-grid), load characteristics, and battery communication protocol to ensure full compatibility and optimal efficiency across the operating range.'
-      :'逆变器采用古瑞瓦特（Growatt）、阳光电源（Sungrow）、华为 FusionSolar、Victron Energy、SMA 等国际一线品牌，通过 CE、IEC 62109 及目标市场并网认证。依据项目并网类型（并网 / 混合 / 离网）、负载特性与电池通讯协议综合选型，确保全工况兼容与最优转换效率。';
+      ?'Inverters are sourced from internationally recognised Tier-1 manufacturers including Deye, Solis, Growatt, and GoodWe, all carrying CE and IEC 62109 certifications. Selection is based on the site grid type (on-grid / hybrid / off-grid), load profile, and battery communication protocol to ensure full compatibility and peak efficiency.'
+      :'逆变器采用德业（Deye）、锦浪（Solis）、古瑞瓦特（Growatt）、固德威（GoodWe）等国际一线品牌，通过 CE 及 IEC 62109 认证，依据项目并网类型（并网/混合/离网）、负载特性与电池通讯协议综合选型，确保全工况兼容与最优转换效率。';
 
     const ch3=[
       H1(isEn?'3. System Design':'三、系统设计'),
@@ -860,35 +966,22 @@ async function exportReport(){
       PB()
     ];
 
-    // ========= Ch4: Energy Simulation =========
-    const perfRows=[
-      [isEn?'Daily PV Generation':'日均发电量',c.pv.reduce((a,b)=>a+b,0).toFixed(2)+' kWh'],
-      [isEn?'Annual Generation (est.)':'年发电量（估算）',pvYearMwh+' MWh'],
-      [isEn?'Self-Sufficiency Rate':'用电自给率',s.selfSuff.toFixed(0)+'%'],
-      [isEn?'Self-Consumption Rate':'绿电自用率',s.selfCons.toFixed(0)+'%'],
-      [isEn?'Annual CO₂ Reduction':'年减碳量',s.co2t.toFixed(1)+' t CO₂'],
-      [isEn?'Data Source':'数据来源',c.shapeSrc],
-    ];
-    const ch4=[
-      H1(isEn?'4. Energy Simulation':'四、能量模拟'),
-      P(isEn?'The following chart shows the 24-hour power flow simulation for a typical annual average day, based on NASA POWER irradiance data calibrated to the designed system capacity.':'下图为基于 NASA POWER 辐照数据、按设计容量标定的典型日全天电力流动模拟曲线。',{after:160}),
-      new Table({width:TW,borders:BORDERS,rows:[new TableRow({children:[hCell(isEn?'Performance Indicator':'性能指标'),hCell(isEn?'Value':'数值')]}), ...perfRows.map(([k,v])=>new TableRow({children:[dCell(k),dCell(v)]}))]}),
-      new Paragraph({children:[new ImageRun({data:chartBuf,transformation:{width:580,height:242}})],alignment:AlignmentType.CENTER,spacing:{before:300,after:140}}),
-      P(isEn?'Figure: 24-hour power flow (typical annual average day). Orange: PV generation; Dark blue: Load; Purple dashed: Battery charge/discharge power (negative=charging); Green dashed: Battery SOC % (right axis).':'图注：典型日24小时电力流动。橙色：光伏发电；深蓝：负载用电；紫色虚线：电池充放电功率（负值=充电）；绿色虚线：电池电量%（右轴）。',{italics:true,size:18,color:GRAY,after:0}),
-      PB()
-    ];
-
-    // ========= Ch5: Commercial Proposal =========
+    // ========= Ch4: Commercial Proposal =========
+    const pvTotalWp=c.pvPanels*(c.panelUnit*1000);
+    const combinerStrings=Math.ceil(c.pvPanels/12);
+    const combinerSpec=combinerStrings+'P'+combinerStrings+'N';
+    const combinerSpecZh=combinerStrings+'进'+combinerStrings+'出';
+    const cableQty=Math.ceil(c.pvPanels*10/100)*100;
+    const batItemName=isEn
+      ?'LFP Battery System ('+c.bat.count+' × '+c.bat.unit+' kWh, total '+c.batActual+' kWh)'
+      :'储能电池系统（'+c.bat.count+' × '+c.bat.unit+' kWh，共 '+c.batActual+' kWh LFP）';
     const priceItems=[
-      [isEn?'PV Modules ('+c.pvActual.toFixed(1)+' kWp)':'光伏组件（'+c.pvActual.toFixed(1)+' kWp）',c.pvPanels,isEn?'pcs':'块'],
-      [isEn?'Battery System ('+c.batActual+' kWh LFP)':'储能电池系统（'+c.batActual+' kWh LFP）','1',isEn?'set':'套'],
-      [isEn?'Inverter ('+c.invKva+' kVA)':'逆变器（'+c.invKva+' kVA）','1',isEn?'set':'套'],
-      [isEn?'Mounting Structure & Accessories':'组件支架及配件','1',isEn?'lot':'批'],
-      [isEn?'DC & AC Cables':'直流/交流线缆','1',isEn?'lot':'批'],
-      [isEn?'Monitoring System':'监控系统','1',isEn?'set':'套'],
-      [isEn?'Installation & Commissioning':'安装调试','1',isEn?'lot':'批'],
-      [isEn?'Civil & Foundation Works':'土建基础工程','1',isEn?'lot':'批'],
-      [isEn?'Others':'其他费用','',''],
+      [isEn?'PV Module ('+(c.panelUnit*1000).toFixed(0)+'W)':'光伏组件（'+(c.panelUnit*1000).toFixed(0)+'W）', pvTotalWp, 'W'],
+      [batItemName, 1, isEn?'set':'套'],
+      [isEn?'Inverter ('+c.invKva+' kVA)':'逆变器（'+c.invKva+' kVA）', 1, isEn?'set':'套'],
+      [isEn?'PV Mounting Structure & Accessories':'光伏支架及配件', 1, isEn?'set':'套'],
+      [isEn?'PV DC Combiner Box ('+combinerSpec+')':'光伏直流汇流箱（'+combinerSpecZh+'）', 1, isEn?'unit':'台'],
+      [isEn?'PV DC Cable':'光伏直流线缆', cableQty, 'm'],
     ];
     const priceRows=[
       new TableRow({children:[hCell('#'),hCell(isEn?'Item Description':'项目名称'),hCell(isEn?'Qty':'数量'),hCell(isEn?'Unit':'单位'),hCell(isEn?'Unit Price':'单价'),hCell(isEn?'Total Price':'合价'),hCell(isEn?'Remarks':'备注')]}),
@@ -909,9 +1002,8 @@ async function exportReport(){
       new TableRow({children:[dCell(isEn?'Date: _______________':'日期：_______________'),dCell(isEn?'Date: _______________':'日期：_______________'),dCell(isEn?'Date: _______________':'日期：_______________')]}),
       new TableRow({children:[dCell('MIDFINE Energy'),dCell(''),dCell(customer)]})
     ];
-    const ch5=[
-      H1(isEn?'5. Commercial Proposal':'五、商务报价'),
-      P(isEn?'The following quotation is provided for reference. All items subject to final confirmation with MIDFINE Energy.':'以下报价仅供参考，各项单价及合价请与 MIDFINE 能源销售团队确认后填写。',{after:180}),
+    const ch4q=[
+      H1(isEn?'4. Commercial Proposal':'四、商务报价'),
       new Table({width:TW,borders:BORDERS,rows:priceRows}),
       new Paragraph({spacing:{before:400,after:100},children:[new TextRun({text:isEn?'* Notes:':'* 备注：',bold:true,size:20})]}),
       P(isEn?'1. Prices above are in USD unless otherwise agreed.':'1. 报价币种以双方协议为准。'),
@@ -927,7 +1019,7 @@ async function exportReport(){
       description:'Generated by MIDFINE PV Calculator v3.1',
       sections:[{
         properties:{page:{margin:{top:1080,right:1080,bottom:1080,left:1080}}},
-        children:[...coverSection,...ch1,...ch2,...ch3,...ch4,...ch5]
+        children:[...coverSection,...ch1,...ch2,...ch3,...ch4q]
       }]
     });
     const blob=await Packer.toBlob(doc);
