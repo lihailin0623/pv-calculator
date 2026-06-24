@@ -859,7 +859,7 @@ async function exportReport(){
   const btn=document.getElementById('exportBtn');
   btn.disabled=true;btn.querySelector('span').textContent=t('exportingMsg');
   try{
-    const isEn=lang==='en';
+    const isEn=lang!=='zh';
     const customer=document.getElementById('customerName').value.trim()||(isEn?'Customer':'客户');
     const location=nasaLocationName||(isEn?'Project Site':'项目地点');
     const dateStr=new Date().toLocaleDateString(isEn?'en-US':'zh-CN',{year:'numeric',month:'long',day:'numeric'});
