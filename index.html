@@ -434,7 +434,9 @@ function setLang(l){
   });
   // re-render calc button text
   const cb=document.getElementById('calcBtn'); if(cb) cb.textContent=t('calcBtn');
-  // re-render chart if simulation already done
+  // re-render dynamic lists
+  renderLoads();
+  renderGrid(document.querySelector('.cat-tab.active')?.dataset.cat||Object.keys(APPLIANCES)[0]);
   if(lastCalc&&lastSim) renderSimulation();
 }
 
@@ -618,7 +620,8 @@ function renderLoads(){
   loads.forEach((l,i)=>{
     if(l.start===undefined)l.start=8;
     const row=document.createElement('div');row.className='load-row';
-    row.innerHTML='<span class="dev-name" title="'+l.name+'">'+l.name+'</span><input type="number" min="1" step="1" value="'+l.power+'" onchange="loads['+i+'].power=+this.value;onLoadEdit()"><input type="number" min="1" step="1" value="'+(l.qty||1)+'" onchange="loads['+i+'].qty=+this.value;onLoadEdit()"><input type="number" min="0" max="23" step="1" value="'+l.start+'" onchange="loads['+i+'].start=((+this.value)%24+24)%24;this.value=loads['+i+'].start;onLoadEdit()"><input type="number" min="0.1" max="24" step="0.5" value="'+l.hours+'" onchange="loads['+i+'].hours=+this.value;onLoadEdit()"><button class="del-btn" onclick="removeLoad('+i+')" title="删除"><i class="ti ti-x"></i></button>';
+    const dn=(lang==='zh')?l.name:(l.nameEn||(()=>{for(const c of Object.values(APPLIANCES)){const a=c.find(x=>x.name===l.name);if(a?.nameEn)return a.nameEn;}return l.name;})());
+    row.innerHTML='<span class="dev-name" title="'+dn+'">'+dn+'</span><input type="number" min="1" step="1" value="'+l.power+'" onchange="loads['+i+'].power=+this.value;onLoadEdit()"><input type="number" min="1" step="1" value="'+(l.qty||1)+'" onchange="loads['+i+'].qty=+this.value;onLoadEdit()"><input type="number" min="0" max="23" step="1" value="'+l.start+'" onchange="loads['+i+'].start=((+this.value)%24+24)%24;this.value=loads['+i+'].start;onLoadEdit()"><input type="number" min="0.1" max="24" step="0.5" value="'+l.hours+'" onchange="loads['+i+'].hours=+this.value;onLoadEdit()"><button class="del-btn" onclick="removeLoad('+i+')" title="删除"><i class="ti ti-x"></i></button>';
     list.appendChild(row);
   });
   refreshKwh();
