@@ -688,7 +688,8 @@ async function calculate(opts){
   if(pvPanels%2!==0)pvPanels++;
   const pvActual=pvPanels*panelUnit;
   const peakKw=loads.reduce((s,l)=>s+l.power*(l.qty||1),0)/1000;
-  const invReq=peakKw/0.9;
+  // 容配比 0.8~1.25：逆变器容量不得小于光伏容量/1.25，也不得小于负载需求
+  const invReq=Math.max(peakKw/0.9, pvActual/1.25);
   const inv=chooseInverter(invReq);
   const invKva=inv.total;
   const E_pv=pvActual*psh*EFF;
