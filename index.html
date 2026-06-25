@@ -601,7 +601,9 @@ function renderGrid(cat){
   APPLIANCES[cat].forEach(ap=>{
     const d=document.createElement('div');d.className='ap-card';
     const pw=ap.power>=1000?(ap.power/1000).toFixed(1)+'kW':ap.power+'W';
-    d.innerHTML='<div class="ap-name">'+ap.name+'</div><div class="ap-power">'+pw+'</div><div class="ap-hours">'+ap.hours+'h/天</div><div class="ap-note">'+ap.note+'</div>';
+    const dn=lang==='zh'?ap.name:(ap.nameEn||ap.name);
+    const dayLabel=lang==='zh'?'天':'day';
+    d.innerHTML='<div class="ap-name">'+dn+'</div><div class="ap-power">'+pw+'</div><div class="ap-hours">'+ap.hours+'h/'+dayLabel+'</div><div class="ap-note">'+ap.note+'</div>';
     d.onclick=()=>addLoad(ap);el.appendChild(d);
   });
 }
