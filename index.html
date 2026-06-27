@@ -185,7 +185,7 @@ select:focus,input[type=text]:focus{outline:none;border-color:#1D9E75}
       <div class="scenario-tabs" id="scenarioTabs"></div>
       <div class="cat-tabs" id="catTabs"></div>
       <div class="ap-grid" id="apGrid"></div>
-      <div id="customForm" style="display:none">
+      <div id="customForm">
         <div class="custom-form">
           <div class="custom-form-row">
             <div><label data-k="customName">设备名称</label><input type="text" id="customName" placeholder="如：水冷主机"></div>
@@ -620,7 +620,6 @@ const SCENARIOS=[
   {zh:'🏠 家庭住宅',en:'🏠 Residential',cats:['家用空调','厨房电器','照明','家用电器']},
   {zh:'🏢 工商业',en:'🏢 Commercial',cats:['办公设备','商业用电','暖通/制冷','通讯/基站','医疗/卫生']},
   {zh:'🏭 工厂/农业',en:'🏭 Factory & Agriculture',cats:['水泵/电机','暖通/制冷','农业/牧业','通讯/基站']},
-  {zh:'✏️ 自定义',en:'✏️ Custom',cats:['__custom__']},
 ];
 let activeScenario=0;
 function initScenarios(){
@@ -643,14 +642,7 @@ function initScenarios(){
 function renderCatTabs(){
   const sc=SCENARIOS[activeScenario];
   const catEl=document.getElementById('catTabs');
-  const apEl=document.getElementById('apGrid');
-  const cfEl=document.getElementById('customForm');
   catEl.innerHTML='';
-  if(sc.cats[0]==='__custom__'){
-    apEl.style.display='none';cfEl.style.display='';
-    return;
-  }
-  apEl.style.display='';cfEl.style.display='none';
   sc.cats.forEach((cat,i)=>{
     const b=document.createElement('button');
     b.className='cat-btn'+(i===0?' active':'');
