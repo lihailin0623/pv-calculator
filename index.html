@@ -129,12 +129,25 @@ select:focus,input[type=text]:focus{outline:none;border-color:#1D9E75}
 .export-btn:hover{background:#0E4A85;transform:translateY(-1px)}
 .export-btn:disabled{background:#aaa;cursor:not-allowed;transform:none}
 .export-note{font-size:11px;color:#aaa}
+.scenario-tabs{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.sc-btn{flex:1;min-width:0;padding:8px 6px;font-size:12px;font-weight:600;border:2px solid #E0EBE6;border-radius:10px;background:#fff;color:#4a6558;cursor:pointer;transition:all .15s;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc-btn:hover{border-color:#1D9E75;color:#1D9E75}
+.sc-btn.active{background:#1D9E75;border-color:#1D9E75;color:#fff;box-shadow:0 2px 8px rgba(29,158,117,.25)}
+.sc-icon{display:block;font-size:18px;margin-bottom:2px}
+.custom-form{display:flex;flex-direction:column;gap:10px;padding:10px 4px}
+.custom-form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.custom-form label{font-size:11px;color:#6a7670;margin-bottom:2px;display:block}
+.custom-form input{width:100%;box-sizing:border-box;padding:7px 9px;border:1px solid #d8e2db;border-radius:7px;font-size:13px;outline:none;background:#fff;color:#16201b}
+.custom-form input:focus{border-color:#1D9E75}
+.custom-form-btn{width:100%;padding:9px;background:#1D9E75;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
+.custom-form-btn:hover{background:#0F6E56}
 @media(max-width:700px){
   .sim-stats{grid-template-columns:repeat(2,1fr)}
   .sim-chart-box{height:300px}
   .main{grid-template-columns:1fr}
   .right{position:static}
   .ap-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+  .sc-btn{font-size:11px;padding:7px 4px}
 }
 </style>
 </head>
@@ -169,8 +182,22 @@ select:focus,input[type=text]:focus{outline:none;border-color:#1D9E75}
 
     <div class="card">
       <div class="card-title"><i class="ti ti-bolt"></i><span data-k="selectLoad">选择负载设备</span></div>
+      <div class="scenario-tabs" id="scenarioTabs"></div>
       <div class="cat-tabs" id="catTabs"></div>
       <div class="ap-grid" id="apGrid"></div>
+      <div id="customForm" style="display:none">
+        <div class="custom-form">
+          <div class="custom-form-row">
+            <div><label data-k="customName">设备名称</label><input type="text" id="customName" placeholder="如：水冷主机"></div>
+            <div><label data-k="customPowerLbl">功率 (W)</label><input type="number" id="customPower" placeholder="如：1500" min="1"></div>
+          </div>
+          <div class="custom-form-row">
+            <div><label data-k="customHoursLbl">每天使用 (h)</label><input type="number" id="customHours" placeholder="如：8" min="0.1" max="24" step="0.5"></div>
+            <div><label data-k="customStartLbl">起始时间 (0-23)</label><input type="number" id="customStart" placeholder="如：8" min="0" max="23"></div>
+          </div>
+          <button class="custom-form-btn" onclick="addCustomLoad()"><span data-k="addCustom">+ 添加到负载清单</span></button>
+        </div>
+      </div>
     </div>
 
     <div class="card">
@@ -313,6 +340,7 @@ zh:{
   projectInfo:'项目信息', customerName:'客户名称', projectLoc:'项目地点',
   customerNamePh:'公司 / 客户名称', projectLocPh:'查询 NASA 后自动填入',
   selectLoad:'选择负载设备', loadList:'负载清单', loadHint:'点击上方电器卡片添加设备',
+  customName:'设备名称', customPowerLbl:'功率 (W)', customHoursLbl:'每天使用 (h)', customStartLbl:'起始时间 (0-23)', addCustom:'+ 添加到负载清单',
   devName:'设备名称', power:'功率(W)', qty:'数量', startH:'起始(时)', durH:'时长(h)',
   totalDaily:'日用电量合计：', day:'天', day2:'天',
   sysParams:'系统参数', nasaTitle:'NASA POWER 实时日照数据',
@@ -335,6 +363,7 @@ en:{
   projectInfo:'Project Information', customerName:'Customer Name', projectLoc:'Project Location',
   customerNamePh:'Company / Customer Name', projectLocPh:'Auto-filled after NASA query',
   selectLoad:'Select Load Devices', loadList:'Load Schedule', loadHint:'Click appliance cards above to add devices',
+  customName:'Device Name', customPowerLbl:'Power (W)', customHoursLbl:'Daily Usage (h)', customStartLbl:'Start Hour (0-23)', addCustom:'+ Add to Load List',
   devName:'Device', power:'Power(W)', qty:'Qty', startH:'Start(h)', durH:'Hrs(h)',
   totalDaily:'Daily Total: ', day:'day', day2:'day',
   sysParams:'System Parameters', nasaTitle:'NASA POWER Real-time Irradiance',
@@ -436,7 +465,7 @@ function setLang(l){
   const cb=document.getElementById('calcBtn'); if(cb) cb.textContent=t('calcBtn');
   // re-render dynamic lists
   renderLoads();
-  renderGrid(document.querySelector('.cat-tab.active')?.dataset.cat||Object.keys(APPLIANCES)[0]);
+  initScenarios();
   if(lastCalc&&lastSim) renderSimulation();
 }
 
@@ -587,18 +616,53 @@ function renderMonthlyBars(vals){
   document.getElementById('pshMonthly').innerHTML='<div style="font-size:10px;color:#aaa;margin-bottom:2px">'+(lang==='zh'?'各月峰值日照时数 (h/天)':'Monthly PSH (h/day)')+'</div><div class="month-bars">'+vals.map((v,i)=>'<div class="month-bar" style="height:'+( Math.round(v/max*42)+4)+'px"><div class="tip">'+mn[i]+': '+v.toFixed(1)+'h</div></div>').join('')+'</div><div class="month-labels">'+mn.map(m=>'<span>'+m.slice(0,3)+'</span>').join('')+'</div>';
 }
 
-function initCats(){
-  const el=document.getElementById('catTabs');
-  Object.keys(APPLIANCES).forEach((cat,i)=>{
-    const b=document.createElement('button');b.className='cat-btn'+(i===0?' active':'');b.textContent=cat;
-    b.onclick=()=>{document.querySelectorAll('.cat-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderGrid(cat);};
-    el.appendChild(b);
+const SCENARIOS=[
+  {zh:'🏠 家庭住宅',en:'🏠 Residential',cats:['家用空调','厨房电器','照明','家用电器']},
+  {zh:'🏢 工商业',en:'🏢 Commercial',cats:['办公设备','商业用电','暖通/制冷','通讯/基站','医疗/卫生']},
+  {zh:'🏭 工厂/农业',en:'🏭 Factory & Agriculture',cats:['水泵/电机','暖通/制冷','农业/牧业','通讯/基站']},
+  {zh:'✏️ 自定义',en:'✏️ Custom',cats:['__custom__']},
+];
+let activeScenario=0;
+function initScenarios(){
+  const sEl=document.getElementById('scenarioTabs');
+  sEl.innerHTML='';
+  SCENARIOS.forEach((sc,i)=>{
+    const b=document.createElement('button');
+    b.className='sc-btn'+(i===0?' active':'');
+    b.textContent=lang==='zh'?sc.zh:sc.en;
+    b.onclick=()=>{
+      activeScenario=i;
+      document.querySelectorAll('.sc-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      renderCatTabs();
+    };
+    sEl.appendChild(b);
   });
-  renderGrid(Object.keys(APPLIANCES)[0]);
+  renderCatTabs();
+}
+function renderCatTabs(){
+  const sc=SCENARIOS[activeScenario];
+  const catEl=document.getElementById('catTabs');
+  const apEl=document.getElementById('apGrid');
+  const cfEl=document.getElementById('customForm');
+  catEl.innerHTML='';
+  if(sc.cats[0]==='__custom__'){
+    apEl.style.display='none';cfEl.style.display='';
+    return;
+  }
+  apEl.style.display='';cfEl.style.display='none';
+  sc.cats.forEach((cat,i)=>{
+    const b=document.createElement('button');
+    b.className='cat-btn'+(i===0?' active':'');
+    b.textContent=cat;
+    b.onclick=()=>{document.querySelectorAll('.cat-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderGrid(cat);};
+    catEl.appendChild(b);
+  });
+  renderGrid(sc.cats[0]);
 }
 function renderGrid(cat){
   const el=document.getElementById('apGrid');el.innerHTML='';
-  APPLIANCES[cat].forEach(ap=>{
+  (APPLIANCES[cat]||[]).forEach(ap=>{
     const d=document.createElement('div');d.className='ap-card';
     const pw=ap.power>=1000?(ap.power/1000).toFixed(1)+'kW':ap.power+'W';
     const dn=lang==='zh'?ap.name:(ap.nameEn||ap.name);
@@ -606,6 +670,21 @@ function renderGrid(cat){
     d.innerHTML='<div class="ap-name">'+dn+'</div><div class="ap-power">'+pw+'</div><div class="ap-hours">'+ap.hours+'h/'+dayLabel+'</div><div class="ap-note">'+ap.note+'</div>';
     d.onclick=()=>addLoad(ap);el.appendChild(d);
   });
+}
+function addCustomLoad(){
+  const name=document.getElementById('customName').value.trim();
+  const power=parseFloat(document.getElementById('customPower').value);
+  const hours=parseFloat(document.getElementById('customHours').value);
+  const start=parseInt(document.getElementById('customStart').value)||0;
+  if(!name){alert(lang==='zh'?'请输入设备名称':'Please enter device name');return;}
+  if(!power||power<=0){alert(lang==='zh'?'请输入有效功率':'Please enter valid power');return;}
+  if(!hours||hours<=0){alert(lang==='zh'?'请输入使用时长':'Please enter usage hours');return;}
+  const ap={name,nameEn:name,power,hours,start,note:lang==='zh'?'自定义设备':'Custom device'};
+  addLoad(ap);
+  document.getElementById('customName').value='';
+  document.getElementById('customPower').value='';
+  document.getElementById('customHours').value='';
+  document.getElementById('customStart').value='';
 }
 function initCities(){
   const s=document.getElementById('citySelect');
@@ -1046,7 +1125,7 @@ async function exportReport(){
   btn.disabled=false;btn.querySelector('span').textContent=t('exportBtn');
 }
 
-initCats();
+initScenarios();
 initCities();
 setSrc('nasa');
 </script>
