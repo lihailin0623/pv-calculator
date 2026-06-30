@@ -807,10 +807,10 @@ function renderSimulation(){
   document.getElementById('simCaption').innerHTML=
     '<span class="leg"><span class="dot" style="background:#F4A52A"></span>'+(isEn?'PV Generation':'光伏发电')+'</span>'+
     '<span class="leg"><span class="dot" style="background:#274B8E"></span>'+(isEn?'Load':'负载用电')+'</span>'+
-    '<span class="leg"><span class="dot" style="background:#9B59B6"></span>'+(isEn?'Bat. Power (−charge/+discharge)':'电池功率（−充电/+放电）')+'</span>'+
+    '<span class="leg"><span class="dot" style="background:#9B59B6"></span>'+(isEn?'Bat. Power (+charge/−discharge)':'电池功率（+充电/−放电）')+'</span>'+
     '<span class="leg"><span class="dot" style="background:#1FA978;opacity:.7"></span>'+(isEn?'Battery SOC (right axis)':'电池电量%（右轴）')+'</span>'+
     (gridTot>0.05?'<span class="leg"><span class="dot" style="background:#E0625E"></span>'+(isEn?'Grid Import':'电网补充')+'</span>':'')+
-    '<br>'+(isEn?'Shaded areas = night. Orange above blue line → surplus PV charges battery (SOC rises). Night → battery discharges (SOC falls). Purple = battery power flow.':'灰色区域=夜间。橙色高于蓝线时光伏富余，电池充电（绿色电量上升）；夜间电池放电（电量下降）。紫色为电池充放电功率。');
+    '<br>'+(isEn?'Shaded areas = night. When PV (orange) > Load (blue), battery charges — purple curve rises above zero and SOC increases. At night battery discharges — purple curve falls below zero and SOC decreases.':'灰色区域=夜间。橙色高于蓝线时光伏富余，电池充电（紫色曲线在零线以上，SOC上升）；夜间电池放电（紫色曲线在零线以下，SOC下降）。');
 
   renderSimAdvice({selfCons,selfSuff,curtTot,gridTot,pvTot,loadTot,directRatio:lastCalc.dailyKwh>0?lastCalc.pvDirectKwh/lastCalc.dailyKwh:0});
   document.getElementById('simNote').textContent=(isEn?'Source: ':'数据源：')+shapeSrc+(isEn?'; Curve amplitude calibrated to PSH='+psh+'h, efficiency '+(EFF*100).toFixed(0)+'%. Annual average typical day; actual varies by cloud cover and season. CO₂ factor: 0.581 kg/kWh.':'; 曲线幅值按年均 PSH='+psh+'h、效率'+(EFF*100).toFixed(0)+'%标定。典型日平均，实际因云量/季节偏差。减碳系数 0.581 kg/kWh。');
@@ -883,7 +883,7 @@ function renderSimChart(pv,load,batP,socPct,grid){
   const datasets=[
     {label:isEn?'PV Generation':'光伏发电',data:pv,borderColor:'#F4A52A',backgroundColor:grad('rgba(244,165,42,0.38)','rgba(244,165,42,0.02)'),fill:true,tension:0.4,pointRadius:0,borderWidth:2.5,yAxisID:'y',order:4},
     {label:isEn?'Load':'负载用电',data:load,borderColor:'#274B8E',backgroundColor:'transparent',fill:false,tension:0.3,pointRadius:0,borderWidth:2.5,yAxisID:'y',order:1},
-    {label:isEn?'Battery Power':'电池充放电功率',data:batP,borderColor:'#9B59B6',backgroundColor:'transparent',fill:false,tension:0.3,pointRadius:0,borderWidth:1.8,borderDash:[5,3],yAxisID:'y',order:2},
+    {label:isEn?'Battery Power':'电池充放电功率',data:batP.map(v=>-v),borderColor:'#9B59B6',backgroundColor:'transparent',fill:false,tension:0.3,pointRadius:0,borderWidth:1.8,borderDash:[5,3],yAxisID:'y',order:2},
     {label:isEn?'Battery SOC':'电池电量',data:socPct,borderColor:'#1FA978',backgroundColor:grad('rgba(31,169,120,0.18)','rgba(31,169,120,0.01)'),fill:true,tension:0.35,pointRadius:0,borderWidth:2,borderDash:[6,3],yAxisID:'y1',order:5}
   ];
   if(hasGrid)datasets.push({label:isEn?'Grid Import':'电网补充',data:grid,borderColor:'#E0625E',backgroundColor:'rgba(224,98,94,0.25)',fill:true,tension:0.25,pointRadius:0,borderWidth:1.5,yAxisID:'y',order:3});
@@ -982,7 +982,7 @@ async function exportReport(){
       new Paragraph({spacing:{before:320,after:60},children:[new TextRun({text:isEn?'24-Hour Power Flow Simulation (Typical Day)':'24小时电力流动模拟（典型日）',bold:true,size:22,color:BLUE})]}),
       P(isEn?'The chart below simulates hourly power flow for a typical annual-average day based on NASA POWER irradiance data, showing how PV generation, battery storage, and load interact throughout the day.':'下图基于 NASA POWER 辐照数据模拟典型日逐时电力流动，直观呈现光伏发电、储能电池与负载的全天协同运行情况。',{after:120,size:20,color:GRAY}),
       new Paragraph({children:[new ImageRun({data:chartBuf,transformation:{width:580,height:242}})],alignment:AlignmentType.CENTER,spacing:{before:80,after:100}}),
-      P(isEn?'Orange: PV generation  |  Dark blue: Load  |  Purple dashed: Battery power (−=charging)  |  Green dashed: Battery SOC % (right axis)':'橙色：光伏发电  |  深蓝：负载用电  |  紫色虚线：电池充放电功率（负=充电）  |  绿色虚线：电池电量%（右轴）',{italics:true,size:17,color:GRAY,after:0}),
+      P(isEn?'Orange: PV generation  |  Dark blue: Load  |  Purple dashed: Battery power (+charging / −discharging)  |  Green dashed: Battery SOC % (right axis)':'橙色：光伏发电  |  深蓝：负载用电  |  紫色虚线：电池充放电功率（正=充电/负=放电）  |  绿色虚线：电池电量%（右轴）',{italics:true,size:17,color:GRAY,after:0}),
       PB()
     ];
 
