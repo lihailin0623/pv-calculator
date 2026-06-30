@@ -745,7 +745,8 @@ async function calculate(opts){
   const EFF=+document.getElementById('sysEff').value;
   const BAT_EFF=0.95;
   const dailyKwh=getDailyKwh();
-  const pvReq=dailyKwh/(psh*EFF);
+  // 多天离网：第1天光伏需发满 autonomy 天用量（既供当天又充满电池备用）
+  const pvReq=dailyKwh*autonomy/(psh*EFF);
   let pvPanels=Math.ceil(pvReq/panelUnit);
   if(pvPanels%2!==0)pvPanels++;
   const pvActual=pvPanels*panelUnit;
@@ -867,7 +868,8 @@ function dispatchBattery(pv,load,cap,dod,etaRT){
   // For single day: iterate 6 times to reach cyclic steady state
   // For multi-day: start at 50% SOC, run straight through once
   const iters=n===24?6:1;
-  let soc=floor+cap*dod*0.5,socArr=[],batP=[],grid=[],curt=[],prevSocEnd=soc;
+  // 单天：从50%开始迭代收敛；多天：从耗尽（floor）开始，模拟阴雨前电池充满一天再放电
+  let soc=n===24?floor+cap*dod*0.5:floor,socArr=[],batP=[],grid=[],curt=[],prevSocEnd=soc;
   for(let iter=0;iter<iters;iter++){
     socArr=[];batP=[];grid=[];curt=[];
     if(iter>0)soc=prevSocEnd; // carry end SOC forward for cyclic single-day
