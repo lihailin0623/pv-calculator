@@ -61,6 +61,8 @@ select:focus,input[type=text]:focus{outline:none;border-color:#1D9E75}
 .psh-badge{display:inline-flex;align-items:center;gap:6px;background:#E1F5EE;border:1px solid #9FE1CB;border-radius:6px;padding:4px 9px;font-size:12px;color:#085041}
 .psh-badge strong{font-size:14px;color:#0F6E56}
 .psh-monthly{margin-top:7px}
+.psh-monthly table th{background:#F0F5F2;color:#6a7670;font-weight:600;padding:2px 0;text-align:center;border:1px solid #e0e8e2}
+.psh-monthly table td{text-align:center;padding:2px 0;border:1px solid #e0e8e2;color:#334;font-weight:500}
 .month-bars{display:flex;gap:3px;align-items:flex-end;height:46px;margin-top:4px}
 .month-bar{flex:1;background:#1D9E75;border-radius:2px 2px 0 0;opacity:.7;position:relative;cursor:default}
 .month-bar:hover{opacity:1}
@@ -250,10 +252,10 @@ select:focus,input[type=text]:focus{outline:none;border-color:#1D9E75}
         <div class="param-item">
           <label data-k="autonomy">自给天数</label>
           <select id="autonomy">
-            <option value="1" selected data-k-opt="auto1">1天（并网+储能）</option>
-            <option value="2" data-k-opt="auto2">2天（住宅离网）</option>
-            <option value="3" data-k-opt="auto3">3天（商业离网）</option>
-            <option value="5" data-k-opt="auto5">5天（偏远地区）</option>
+            <option value="1" selected data-k-opt="auto1">1天</option>
+            <option value="2" data-k-opt="auto2">2天</option>
+            <option value="3" data-k-opt="auto3">3天</option>
+            <option value="5" data-k-opt="auto5">5天</option>
           </select>
         </div>
         <div class="param-item">
@@ -348,7 +350,7 @@ zh:{
   annualPsh:'年均峰值日照', pshSrc:'峰值日照时数来源', manual:'手动选择城市',
   nasaHint:'请先查询地点获取 NASA 日照数据',
   autonomy:'自给天数', batLabel:'电池类型（磷酸铁锂）', panelLabel:'组件规格', sysEff:'系统效率',
-  auto1:'1天（并网+储能）', auto2:'2天（住宅离网）', auto3:'3天（商业离网）', auto5:'5天（偏远地区）',
+  auto1:'1天', auto2:'2天', auto3:'3天', auto5:'5天',
   calcBtn:'计算配置方案', result:'配置结果', resultHint:'填写负载后点击计算',
   simTitle:'光伏储能系统 · 全天发用电模拟', simHint:'先在右侧完成配置计算，系统将生成全天运行曲线',
   exportBtn:'导出 Word 方案书', exportNote:'包含负载清单、配置参数、能量曲线图及空白报价表',
@@ -371,7 +373,7 @@ en:{
   annualPsh:'Annual Avg. PSH', pshSrc:'PSH Data Source', manual:'Manual City Select',
   nasaHint:'Search a location first to get NASA irradiance data',
   autonomy:'Autonomy Days', batLabel:'Battery Type (LFP)', panelLabel:'Module Spec', sysEff:'System Efficiency',
-  auto1:'1 day (Grid + Storage)', auto2:'2 days (Residential Off-grid)', auto3:'3 days (Commercial Off-grid)', auto5:'5 days (Remote)',
+  auto1:'1 day', auto2:'2 days', auto3:'3 days', auto5:'5 days',
   calcBtn:'Calculate System', result:'Results', resultHint:'Add loads then click Calculate',
   simTitle:'PV & Storage · Daily Operation Simulation', simHint:'Complete calculation on the right to generate 24-hour simulation',
   exportBtn:'Export Word Proposal', exportNote:'Includes load schedule, system design, simulation chart & blank quotation',
@@ -613,7 +615,11 @@ async function fetchNASA(){
 function setStatus(m,t2){const el=document.getElementById('locStatus');el.textContent=m;el.className='loc-status'+(t2?' '+t2:'');}
 function renderMonthlyBars(vals){
   const max=Math.max(...vals),mn=lang==='zh'?MONTHS:MONTHS_EN;
-  document.getElementById('pshMonthly').innerHTML='<div style="font-size:10px;color:#aaa;margin-bottom:2px">'+(lang==='zh'?'各月峰值日照时数 (h/天)':'Monthly PSH (h/day)')+'</div><div class="month-bars">'+vals.map((v,i)=>'<div class="month-bar" style="height:'+( Math.round(v/max*42)+4)+'px"><div class="tip">'+mn[i]+': '+v.toFixed(1)+'h</div></div>').join('')+'</div><div class="month-labels">'+mn.map(m=>'<span>'+m.slice(0,3)+'</span>').join('')+'</div>';
+  const bars='<div class="month-bars">'+vals.map((v,i)=>'<div class="month-bar" style="height:'+(Math.round(v/max*42)+4)+'px"><div class="tip">'+mn[i]+': '+v.toFixed(1)+'h</div></div>').join('')+'</div><div class="month-labels">'+mn.map(m=>'<span>'+m.slice(0,3)+'</span>').join('')+'</div>';
+  const tableRows=vals.map((v,i)=>'<td>'+v.toFixed(1)+'</td>').join('');
+  const tableHead=mn.map(m=>'<th>'+m.slice(0,3)+'</th>').join('');
+  const table='<table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:10px;color:#555"><tr>'+tableHead+'</tr><tr>'+tableRows+'</tr></table>';
+  document.getElementById('pshMonthly').innerHTML='<div style="font-size:10px;color:#aaa;margin-bottom:2px">'+(lang==='zh'?'各月峰值日照时数 (h/天)':'Monthly PSH (h/day)')+'</div>'+bars+table;
 }
 
 const SCENARIOS=[
@@ -783,21 +789,31 @@ async function calculate(opts){
 
 function renderSimulation(){
   if(!lastCalc)return;
-  const{pv,load,batActual,dod,BAT_RT,psh,EFF,shapeSrc}=lastCalc;
-  const disp=dispatchBattery(pv,load,batActual,dod,BAT_RT);
+  const{pv,load,batActual,dod,BAT_RT,psh,EFF,shapeSrc,autonomy}=lastCalc;
+  // Multi-day: Day1=sunny, Days 2..N=rainy (no PV)
+  const days=autonomy||1;
+  const pvSim=days>1?[...pv,...Array(24*(days-1)).fill(0)]:pv;
+  const loadSim=days>1?Array.from({length:days},()=>load).flat():load;
+  const disp=dispatchBattery(pvSim,loadSim,batActual,dod,BAT_RT);
   const socPct=disp.soc.map(s=>disp.ceil>0?s/disp.ceil*100:0);
+  // Stats based on single day (for kpi cards)
   const pvTot=pv.reduce((a,b)=>a+b,0);
-  const curtTot=disp.curt.reduce((a,b)=>a+b,0);
+  const curtTot=disp.curt.slice(0,24).reduce((a,b)=>a+b,0);
   const loadTot=load.reduce((a,b)=>a+b,0);
   const gridTot=disp.grid.reduce((a,b)=>a+b,0);
   const pvUsed=pvTot-curtTot;
   const selfCons=pvTot>0?pvUsed/pvTot*100:0;
-  const selfSuff=loadTot>0?(loadTot-gridTot)/loadTot*100:0;
-  const gridPct=loadTot>0?gridTot/loadTot*100:0;
+  const selfSuff=loadTot*days>0?(loadTot*days-gridTot)/(loadTot*days)*100:0;
+  const gridPct=loadTot*days>0?gridTot/(loadTot*days)*100:0;
   const co2t=pvUsed*365*0.581/1000;
   const isEn=lang==='en';
   const gridSent=gridTot>0.05?(isEn?', only <b>'+gridPct.toFixed(0)+'%</b> from grid':'，仅 <b>'+gridPct.toFixed(0)+'%</b> 需电网补充'):(isEn?', virtually no grid import':'，全天基本无需外购电');
-  document.getElementById('simHero').innerHTML='<i class="ti ti-bulb-filled" style="font-size:17px;margin-right:6px;vertical-align:-2px"></i>'+(isEn?'Daytime PV generation covers load directly while charging the battery. At night, the battery discharges to supply the load — self-sufficiency <b>'+selfSuff.toFixed(0)+'%</b>, green self-consumption <b>'+selfCons.toFixed(0)+'%</b>':'白天太阳能优先直供，同时为电池充电；夜间由电池放电供负载——用电自给率 <b>'+selfSuff.toFixed(0)+'%</b>，绿电自用率 <b>'+selfCons.toFixed(0)+'%</b>')+gridSent+'。';
+  const heroText=days>1
+    ?(isEn?'<b>Consecutive rainy-day scenario</b>: Day 1 sunny (PV charges battery), Days 2–'+days+' no PV (battery supplies all load). '+days+'-day self-sufficiency <b>'+selfSuff.toFixed(0)+'%</b>, Day-1 green self-consumption <b>'+selfCons.toFixed(0)+'%</b>'
+        :'<b>连续阴雨场景模拟</b>：第1天晴天光伏发电充电，第2天起连续 '+(days-1)+' 天无发电（阴雨），全由电池供电。'+days+'天综合自给率 <b>'+selfSuff.toFixed(0)+'%</b>，第1天绿电自用率 <b>'+selfCons.toFixed(0)+'%</b>')
+    :(isEn?'Daytime PV generation covers load directly while charging the battery. At night, the battery discharges to supply the load — self-sufficiency <b>'+selfSuff.toFixed(0)+'%</b>, green self-consumption <b>'+selfCons.toFixed(0)+'%</b>'
+        :'白天太阳能优先直供，同时为电池充电；夜间由电池放电供负载——用电自给率 <b>'+selfSuff.toFixed(0)+'%</b>，绿电自用率 <b>'+selfCons.toFixed(0)+'%</b>');
+  document.getElementById('simHero').innerHTML='<i class="ti ti-bulb-filled" style="font-size:17px;margin-right:6px;vertical-align:-2px"></i>'+heroText+gridSent+'。';
   document.getElementById('simStats').innerHTML=
     '<div class="sim-stat s-pv"><div class="st-ico"><i class="ti ti-solar-panel"></i></div><div class="st-lbl">'+(isEn?'Daily Generation':'日均发电量')+'</div><div class="st-val">'+pvTot.toFixed(1)+'<span class="u">kWh</span></div><div class="st-foot">'+(isEn?'~':'约')+(pvTot*365/1000).toFixed(1)+' MWh/yr</div></div>'+
     '<div class="sim-stat s-self"><div class="st-ico"><i class="ti ti-recycle"></i></div><div class="st-lbl">'+(isEn?'Self-Consumption':'绿电自用率')+'</div><div class="st-val">'+selfCons.toFixed(0)+'<span class="u">%</span></div><div class="st-foot">'+(isEn?'PV energy actually used':'发出的电被用掉的比例')+'</div></div>'+
@@ -810,13 +826,15 @@ function renderSimulation(){
     '<span class="leg"><span class="dot" style="background:#9B59B6"></span>'+(isEn?'Bat. Power (+charge/−discharge)':'电池功率（+充电/−放电）')+'</span>'+
     '<span class="leg"><span class="dot" style="background:#1FA978;opacity:.7"></span>'+(isEn?'Battery SOC (right axis)':'电池电量%（右轴）')+'</span>'+
     (gridTot>0.05?'<span class="leg"><span class="dot" style="background:#E0625E"></span>'+(isEn?'Grid Import':'电网补充')+'</span>':'')+
-    '<br>'+(isEn?'Shaded areas = night. When PV (orange) > Load (blue), battery charges — purple curve rises above zero and SOC increases. At night battery discharges — purple curve falls below zero and SOC decreases.':'灰色区域=夜间。橙色高于蓝线时光伏富余，电池充电（紫色曲线在零线以上，SOC上升）；夜间电池放电（紫色曲线在零线以下，SOC下降）。');
+    '<br>'+(days>1
+      ?(isEn?'Day 1 = sunny (PV charges battery). Days 2–'+days+' = rainy (no PV, battery discharges to supply load). Dashed lines = day boundaries.':'第1天晴天（光伏发电充电）；第2天起连续阴雨（无光伏，电池逐日放电供负载）。虚线=天分界线。')
+      :(isEn?'Shaded areas = night. When PV (orange) > Load (blue), battery charges (purple above zero, SOC rises). At night battery discharges (purple below zero, SOC falls).':'灰色区域=夜间。橙色高于蓝线时光伏富余，电池充电（紫色曲线在零线以上，SOC上升）；夜间电池放电（紫色曲线在零线以下，SOC下降）。'));
 
   renderSimAdvice({selfCons,selfSuff,curtTot,gridTot,pvTot,loadTot,directRatio:lastCalc.dailyKwh>0?lastCalc.pvDirectKwh/lastCalc.dailyKwh:0});
   document.getElementById('simNote').textContent=(isEn?'Source: ':'数据源：')+shapeSrc+(isEn?'; Curve amplitude calibrated to PSH='+psh+'h, efficiency '+(EFF*100).toFixed(0)+'%. Annual average typical day; actual varies by cloud cover and season. CO₂ factor: 0.581 kg/kWh.':'; 曲线幅值按年均 PSH='+psh+'h、效率'+(EFF*100).toFixed(0)+'%标定。典型日平均，实际因云量/季节偏差。减碳系数 0.581 kg/kWh。');
   document.getElementById('simSub').textContent=shapeSrc?'· '+shapeSrc.split('·')[0].trim():'';
   lastSim={selfCons,selfSuff,gridTot,pvTot,co2t,curtTot,loadTot};
-  renderSimChart(pv,load,disp.batP,socPct,disp.grid);
+  renderSimChart(pvSim,loadSim,disp.batP,socPct,disp.grid,days);
   document.getElementById('simEmpty').style.display='none';
   document.getElementById('simBody').style.display='';
 }
@@ -845,13 +863,19 @@ async function fetchHourlyShape(lat,lon){
   return null;
 }
 function dispatchBattery(pv,load,cap,dod,etaRT){
-  const ceil=cap,floor=cap*(1-dod),etaC=Math.sqrt(etaRT),etaD=Math.sqrt(etaRT);
-  let soc=floor+cap*dod*0.5,socArr=[],batP=[],grid=[],curt=[];
-  for(let iter=0;iter<6;iter++){socArr=[];batP=[];grid=[];curt=[];
-    for(let h=0;h<24;h++){const net=pv[h]-load[h];let bp=0,gi=0,cu=0;
+  const n=pv.length,ceil=cap,floor=cap*(1-dod),etaC=Math.sqrt(etaRT),etaD=Math.sqrt(etaRT);
+  // For single day: iterate 6 times to reach cyclic steady state
+  // For multi-day: start at 50% SOC, run straight through once
+  const iters=n===24?6:1;
+  let soc=floor+cap*dod*0.5,socArr=[],batP=[],grid=[],curt=[],prevSocEnd=soc;
+  for(let iter=0;iter<iters;iter++){
+    socArr=[];batP=[];grid=[];curt=[];
+    if(iter>0)soc=prevSocEnd; // carry end SOC forward for cyclic single-day
+    for(let h=0;h<n;h++){const net=pv[h]-load[h];let bp=0,gi=0,cu=0;
       if(net>=0){const room=ceil-soc,stored=Math.min(net*etaC,room);soc+=stored;cu=net-stored/etaC;bp=-(stored/etaC);}
       else{const need=-net,avail=soc-floor,drawn=Math.min(need/etaD,avail);soc-=drawn;gi=need-drawn*etaD;bp=drawn*etaD;}
-      socArr.push(soc);batP.push(bp);grid.push(gi);curt.push(cu);}}
+      socArr.push(soc);batP.push(bp);grid.push(gi);curt.push(cu);}
+    prevSocEnd=socArr[socArr.length-1];}
   return{soc:socArr,batP,grid,curt,ceil};
 }
 
@@ -866,19 +890,36 @@ function renderSimAdvice(m){
   document.getElementById('simAdvice').innerHTML='<div class="adv-title"><i class="ti ti-bulb"></i>商务建议（内部参考）</div>'+tips.map(x=>'• '+x).join('<br>');
 }
 
-function renderSimChart(pv,load,batP,socPct,grid){
+function renderSimChart(pv,load,batP,socPct,grid,days){
+  days=days||1;
+  const n=pv.length;
   const ctx=document.getElementById('simChart').getContext('2d');
   if(simChart)simChart.destroy();
-  const labels=Array.from({length:24},(_,h)=>(h<10?'0'+h:h)+':00');
-  const hasGrid=grid.some(v=>v>0.05);
   const isEn=lang==='en';
+  // Build x-axis labels: for multi-day show "D1 00:00", "D2 00:00", etc.
+  const labels=Array.from({length:n},(_,h)=>{
+    if(days===1)return (h<10?'0'+h:h)+':00';
+    const d=Math.floor(h/24)+1,hh=h%24;
+    return hh===0?(isEn?'D'+d+' 00:00':'第'+d+'天 00:00'):hh===12?(isEn?'D'+d+' 12:00':'第'+d+'天 12:00'):'';
+  });
+  const hasGrid=grid.some(v=>v>0.05);
   const grad=(c0,c1)=>ctx2=>{const{ctx:c,chartArea:a}=ctx2.chart;if(!a)return c0;const g=c.createLinearGradient(0,a.top,0,a.bottom);g.addColorStop(0,c0);g.addColorStop(1,c1);return g;};
   const nightShade={id:'nightShade',beforeDraw(chart){
     const x=chart.scales.x;if(!x)return;
     const{ctx:c,chartArea:{top,bottom}}=chart;
-    const x6=x.getPixelForValue(6),x18=x.getPixelForValue(18);
     c.save();c.fillStyle='rgba(28,40,64,0.05)';
-    c.fillRect(x.left,top,x6-x.left,bottom-top);c.fillRect(x18,top,x.right-x18,bottom-top);c.restore();
+    for(let d=0;d<days;d++){
+      const base=d*24;
+      const x0=x.getPixelForValue(base),x6=x.getPixelForValue(base+6),x18=x.getPixelForValue(base+18),x24=x.getPixelForValue(base+24);
+      c.fillRect(x0,top,x6-x0,bottom-top);
+      if(base+18<n)c.fillRect(x18,top,x24-x18,bottom-top);
+    }
+    // Draw day-boundary vertical lines for multi-day
+    if(days>1){c.strokeStyle='rgba(80,80,80,0.2)';c.lineWidth=1;c.setLineDash([4,4]);
+      for(let d=1;d<days;d++){const xd=x.getPixelForValue(d*24);c.beginPath();c.moveTo(xd,top);c.lineTo(xd,bottom);c.stroke();}
+      c.setLineDash([]);
+    }
+    c.restore();
   }};
   const datasets=[
     {label:isEn?'PV Generation':'光伏发电',data:pv,borderColor:'#F4A52A',backgroundColor:grad('rgba(244,165,42,0.38)','rgba(244,165,42,0.02)'),fill:true,tension:0.4,pointRadius:0,borderWidth:2.5,yAxisID:'y',order:4},
