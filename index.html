@@ -190,12 +190,12 @@ select:focus,input[type=text]:focus{outline:none;border-color:#1D9E75}
       <div id="customForm">
         <div class="custom-form">
           <div class="custom-form-row">
-            <div><label data-k="customName">设备名称</label><input type="text" id="customName" placeholder="如：水冷主机"></div>
-            <div><label data-k="customPowerLbl">功率 (W)</label><input type="number" id="customPower" placeholder="如：1500" min="1"></div>
+            <div><label data-k="customName">设备名称</label><input type="text" id="customName" id="customName"></div>
+            <div><label data-k="customPowerLbl">功率 (W)</label><input type="number" id="customPower" min="1"></div>
           </div>
           <div class="custom-form-row">
-            <div><label data-k="customHoursLbl">每天使用 (h)</label><input type="number" id="customHours" placeholder="如：8" min="0.1" max="24" step="0.5"></div>
-            <div><label data-k="customStartLbl">起始时间 (0-23)</label><input type="number" id="customStart" placeholder="如：8" min="0" max="23"></div>
+            <div><label data-k="customHoursLbl">每天使用 (h)</label><input type="number" id="customHours" min="0.1" max="24" step="0.5"></div>
+            <div><label data-k="customStartLbl">起始时间 (0-23)</label><input type="number" id="customStart" min="0" max="23"></div>
           </div>
           <button class="custom-form-btn" onclick="addCustomLoad()"><span data-k="addCustom">+ 添加到负载清单</span></button>
         </div>
@@ -622,6 +622,7 @@ function renderMonthlyBars(vals){
   document.getElementById('pshMonthly').innerHTML='<div style="font-size:10px;color:#aaa;margin-bottom:2px">'+(lang==='zh'?'各月峰值日照时数 (h/天)':'Monthly PSH (h/day)')+'</div>'+bars+table;
 }
 
+const CAT_EN={'家用空调':'Air Conditioning','厨房电器':'Kitchen Appliances','照明':'Lighting','家用电器':'Home Appliances','办公设备':'Office Equipment','商业用电':'Commercial Loads','暖通/制冷':'HVAC / Cooling','通讯/基站':'Telecom / Base Station','医疗/卫生':'Medical / Health','水泵/电机':'Pumps & Motors','农业/牧业':'Agriculture & Livestock'};
 const SCENARIOS=[
   {zh:'🏠 家庭住宅',en:'🏠 Residential',cats:['家用空调','厨房电器','照明','家用电器']},
   {zh:'🏢 工商业',en:'🏢 Commercial',cats:['办公设备','商业用电','暖通/制冷','通讯/基站','医疗/卫生']},
@@ -652,7 +653,7 @@ function renderCatTabs(){
   sc.cats.forEach((cat,i)=>{
     const b=document.createElement('button');
     b.className='cat-btn'+(i===0?' active':'');
-    b.textContent=cat;
+    b.textContent=lang==='zh'?cat:(CAT_EN[cat]||cat);
     b.onclick=()=>{document.querySelectorAll('.cat-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderGrid(cat);};
     catEl.appendChild(b);
   });
