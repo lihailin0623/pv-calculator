@@ -180,6 +180,10 @@ select:focus,input[type=text]:focus{outline:none;border-color:#1D9E75}
         <label data-k="customerName">客户名称</label>
         <input type="text" id="customerName" placeholder="公司 / 客户名称">
       </div>
+      <div class="param-item" style="margin-top:8px">
+        <label data-k="proposalDate">方案日期</label>
+        <input type="date" id="proposalDate">
+      </div>
     </div>
 
     <div class="card">
@@ -339,7 +343,7 @@ const LOGO_B64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkEAAACLCAYAAABm
 const TXT = {
 zh:{
   pageTitle:'光伏与储能配置计算器', pageSub:'v3.1 · 业务员专用工具',
-  projectInfo:'项目信息', customerName:'客户名称', projectLoc:'项目地点',
+  projectInfo:'项目信息', customerName:'客户名称', projectLoc:'项目地点', proposalDate:'方案日期',
   customerNamePh:'公司 / 客户名称', projectLocPh:'查询 NASA 后自动填入',
   selectLoad:'选择负载设备', loadList:'负载清单', loadHint:'点击上方电器卡片添加设备',
   customName:'设备名称', customPowerLbl:'功率 (W)', customHoursLbl:'每天使用 (h)', customStartLbl:'起始时间 (0-23)', addCustom:'+ 添加到负载清单',
@@ -362,7 +366,7 @@ zh:{
 },
 en:{
   pageTitle:'PV & Energy Storage Calculator', pageSub:'v3.1 · Sales Tool',
-  projectInfo:'Project Information', customerName:'Customer Name', projectLoc:'Project Location',
+  projectInfo:'Project Information', customerName:'Customer Name', projectLoc:'Project Location', proposalDate:'Proposal Date',
   customerNamePh:'Company / Customer Name', projectLocPh:'Auto-filled after NASA query',
   selectLoad:'Select Load Devices', loadList:'Load Schedule', loadHint:'Click appliance cards above to add devices',
   customName:'Device Name', customPowerLbl:'Power (W)', customHoursLbl:'Daily Usage (h)', customStartLbl:'Start Hour (0-23)', addCustom:'+ Add to Load List',
@@ -960,7 +964,8 @@ async function exportReport(){
     const isEn=lang!=='zh';
     const customer=document.getElementById('customerName').value.trim()||(isEn?'Customer':'客户');
     const location=nasaLocationName||(isEn?'Project Site':'项目地点');
-    const dateStr=new Date().toLocaleDateString(isEn?'en-US':'zh-CN',{year:'numeric',month:'long',day:'numeric'});
+    const dateRaw=document.getElementById('proposalDate').value;
+    const dateStr=dateRaw?new Date(dateRaw+'T00:00:00').toLocaleDateString(isEn?'en-US':'zh-CN',{year:'numeric',month:'long',day:'numeric'}):new Date().toLocaleDateString(isEn?'en-US':'zh-CN',{year:'numeric',month:'long',day:'numeric'});
     const chartCanvas=document.getElementById('simChart');
     const chartBuf=b64UrlToBuffer(chartCanvas.toDataURL('image/png'));
     const logoBuf=b64UrlToBuffer(LOGO_B64);
@@ -1164,6 +1169,7 @@ async function exportReport(){
 initScenarios();
 initCities();
 setSrc('nasa');
+document.getElementById('proposalDate').value=new Date().toISOString().slice(0,10);
 </script>
 </body>
 </html>
